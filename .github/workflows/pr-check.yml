@@ -1,0 +1,101 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pr-title:
+    name: Check PR Title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate PR title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+          requireScope: false
+
+  pr-size:
+    name: Check PR Size
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+          CHANGED_FILES=$(git diff --name-only $BASE $HEAD | wc -l)
+          ADDED_LINES=$(git diff --numstat $BASE $HEAD | awk '{added+=$1} END {print added}')
+
+          echo "Files changed: $CHANGED_FILES"
+          echo "Lines added: $ADDED_LINES"
+
+          if [ "$CHANGED_FILES" -gt 50 ]; then
+            echo "::warning::This PR changes $CHANGED_FILES files. Consider splitting into smaller PRs."
+          fi
+
+          if [ "$ADDED_LINES" -gt 1000 ]; then
+            echo "::warning::This PR adds $ADDED_LINES lines. Consider splitting into smaller PRs."
+          fi
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v3
+        with:
+          fail-on-severity: moderate
+
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '9.0.0'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for console statements
+        run: |
+          if git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "^\+.*console\.(log|debug|info|warn|error)"; then
+            echo "::warning::Console statements detected. Please remove them before merging."
+          fi
+
+      - name: Check for TODO comments
+        run: |
+          if git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "^\+.*TODO|FIXME"; then
+            echo "::notice::TODO/FIXME comments detected. Consider creating issues for them."
+          fi

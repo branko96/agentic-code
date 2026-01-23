@@ -1,0 +1,35 @@
+{
+  "name": "nextjs-nestjs-boilerplate",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Full-stack monorepo boilerplate with Next.js, NestJS, and AI agents",
+  "scripts": {
+    "dev": "pnpm --parallel dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "build": "pnpm --recursive build",
+    "build:frontend": "pnpm --filter frontend build",
+    "build:backend": "pnpm --filter backend build",
+    "test": "pnpm --recursive test",
+    "test:e2e": "pnpm --filter e2e-tests test",
+    "lint": "pnpm --recursive lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "typecheck": "pnpm --recursive typecheck",
+    "clean": "pnpm --recursive clean && rm -rf node_modules",
+    "prepare": "husky"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "eslint": "^8.56.0",
+    "husky": "^9.0.10",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3"
+  },
+  "packageManager": "pnpm@9.0.0"
+}
