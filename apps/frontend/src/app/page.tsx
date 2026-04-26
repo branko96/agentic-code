@@ -1,44 +1,72 @@
+'use client'
+
+import Link from 'next/link'
+import { useAuth } from '@/components/auth-provider'
+
 export default function Home() {
+  const { isAuthenticated, isLoading, logout, user } = useAuth()
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
-        <div className="flex flex-col items-center gap-8">
-          <h1 className="text-4xl font-bold text-center">
-            Next.js + NestJS Boilerplate
-          </h1>
-          <p className="text-xl text-center text-gray-600 dark:text-gray-400">
-            Full-stack monorepo with AI agents, testing, and automation
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-16 text-slate-50">
+      <div className="w-full max-w-3xl rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-2xl shadow-slate-950/30">
+        <div className="space-y-4">
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-sky-400">
+            Agentic Code
           </p>
+          <h1 className="text-4xl font-semibold tracking-tight">Frontend authentication</h1>
+          <p className="text-base text-slate-300">
+            Minimal Next.js auth flow wired to the NestJS backend contract.
+          </p>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 w-full max-w-3xl">
-            <div className="p-6 border rounded-lg hover:border-gray-400 transition-colors">
-              <h2 className="text-xl font-semibold mb-2">Frontend</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Next.js 14 with App Router, TypeScript, and Tailwind CSS
-              </p>
+        <div className="mt-10 rounded-xl border border-slate-800 bg-slate-950/60 p-6">
+          {isLoading ? (
+            <p className="text-sm text-slate-300">Checking your session...</p>
+          ) : isAuthenticated && user ? (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-2xl font-semibold">
+                  Welcome back, {user.firstName} {user.lastName}
+                </h2>
+                <p className="mt-1 text-sm text-slate-300">Signed in as {user.email}</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/dashboard"
+                  className="rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 transition hover:bg-sky-400"
+                >
+                  Go to dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-slate-500"
+                >
+                  Log out
+                </button>
+              </div>
             </div>
-
-            <div className="p-6 border rounded-lg hover:border-gray-400 transition-colors">
-              <h2 className="text-xl font-semibold mb-2">Backend</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                NestJS with MongoDB, Mongoose, and TypeScript
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-slate-300">
+                Create an account or sign in to test the protected dashboard flow.
               </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/login"
+                  className="rounded-md bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 transition hover:bg-sky-400"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/register"
+                  className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-slate-500"
+                >
+                  Register
+                </Link>
+              </div>
             </div>
-
-            <div className="p-6 border rounded-lg hover:border-gray-400 transition-colors">
-              <h2 className="text-xl font-semibold mb-2">Testing</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Playwright E2E testing with full automation
-              </p>
-            </div>
-
-            <div className="p-6 border rounded-lg hover:border-gray-400 transition-colors">
-              <h2 className="text-xl font-semibold mb-2">AI Agents</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Specialized agents for development, testing, and code review
-              </p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </main>

@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
+import { AuthProvider } from '@/components/auth-provider'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Next.js + NestJS Boilerplate',
-  description: 'Full-stack monorepo boilerplate with AI agents',
+  title: 'Agentic Code Auth',
+  description: 'Frontend auth flow for the Agentic Code monorepo',
 }
 
 export default function RootLayout({
@@ -13,7 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   )
 }
