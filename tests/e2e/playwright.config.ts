@@ -47,10 +47,27 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: 'pnpm dev:frontend',
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    cwd: '../..',
-  },
+  webServer: [
+    {
+      command: `PORT=${new URL(process.env.API_URL || 'http://localhost:3001').port || '3001'} pnpm dev:backend`,
+      url: process.env.API_URL || 'http://localhost:3001/auth/me',
+      reuseExistingServer: !process.env.CI,
+      cwd: '../..',
+      env: {
+        ...process.env,
+        FRONTEND_URL: baseURL,
+      },
+    },
+    {
+      command: `pnpm --filter frontend dev --port ${new URL(baseURL).port || '3000'}`,
+      url: baseURL,
+      reuseExistingServer: !process.env.CI,
+      cwd: '../..',
+      env: {
+        ...process.env,
+        FRONTEND_URL: baseURL,
+        NEXT_PUBLIC_API_URL: process.env.API_URL || 'http://localhost:3001',
+      },
+    },
+  ],
 });
