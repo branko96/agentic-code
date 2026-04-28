@@ -59,25 +59,25 @@ export default function Home() {
 
   if (isCheckingSession) {
     return (
-      <main className="flex min-h-screen items-center justify-center p-6">
-        <p className="text-sm text-gray-600 dark:text-gray-400">Checking session...</p>
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12 text-slate-100">
+        <p className="text-sm text-slate-300">Checking session...</p>
       </main>
     );
   }
 
   if (user) {
     return (
-      <main className="flex min-h-screen items-center justify-center p-6">
-        <section className="w-full max-w-md rounded-lg border p-8 shadow-sm">
-          <h1 className="text-3xl font-bold">You are logged in</h1>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
+      <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),_transparent_40%),linear-gradient(180deg,_#020617_0%,_#111827_100%)] px-6 py-12 text-slate-100">
+        <section className="w-full max-w-md rounded-3xl border border-white/10 bg-white/10 p-8 shadow-2xl shadow-cyan-950/30 backdrop-blur">
+          <h1 className="text-3xl font-semibold tracking-tight text-white">You are logged in</h1>
+          <p className="mt-4 text-slate-300">
             Logged in as {user.firstName} {user.lastName}
           </p>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">{user.email}</p>
+          <p className="mt-2 break-all text-slate-200">{user.email}</p>
           <button
             type="button"
             onClick={handleLogout}
-            className="mt-6 rounded bg-black px-4 py-2 text-white disabled:opacity-50 dark:bg-white dark:text-black"
+            className="mt-6 inline-flex items-center justify-center rounded-xl bg-cyan-400 px-4 py-2.5 font-medium text-slate-950 transition hover:bg-cyan-300 disabled:opacity-50"
           >
             Log out
           </button>
@@ -87,40 +87,40 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
-      <section className="w-full max-w-md rounded-lg border p-8 shadow-sm">
-        <h1 className="text-3xl font-bold">Log in</h1>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.2),_transparent_38%),linear-gradient(180deg,_#020617_0%,_#111827_100%)] px-6 py-12 text-slate-100">
+      <section className="w-full max-w-md rounded-3xl border border-white/10 bg-white/10 p-8 shadow-2xl shadow-cyan-950/30 backdrop-blur">
+        <h1 className="text-3xl font-semibold tracking-tight text-white">Log in</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-300">
           Sign in with your existing backend account.
         </p>
 
         <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
-          <label className="flex flex-col gap-2 text-sm font-medium">
+          <label className="flex flex-col gap-2 text-sm font-medium text-slate-100">
             Email
             <input
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="rounded border px-3 py-2"
+              className="rounded-xl border border-white/15 bg-slate-50 px-3 py-2.5 text-slate-950 placeholder:text-slate-500 outline-none transition focus:border-cyan-300 focus:ring-2 focus:ring-cyan-400/40"
               autoComplete="email"
               required
             />
           </label>
 
-          <label className="flex flex-col gap-2 text-sm font-medium">
+          <label className="flex flex-col gap-2 text-sm font-medium text-slate-100">
             Password
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="rounded border px-3 py-2"
+              className="rounded-xl border border-white/15 bg-slate-50 px-3 py-2.5 text-slate-950 placeholder:text-slate-500 outline-none transition focus:border-cyan-300 focus:ring-2 focus:ring-cyan-400/40"
               autoComplete="current-password"
               required
             />
           </label>
 
           {error ? (
-            <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
               {error}
             </p>
           ) : null}
@@ -128,7 +128,7 @@ export default function Home() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded bg-black px-4 py-2 text-white disabled:opacity-50 dark:bg-white dark:text-black"
+            className="inline-flex items-center justify-center rounded-xl bg-cyan-400 px-4 py-2.5 font-medium text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? 'Logging in...' : 'Log in'}
           </button>
