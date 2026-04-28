@@ -47,6 +47,39 @@ test.describe('Homepage login', () => {
     await expect(page.getByRole('heading', { name: 'You are logged in' })).toHaveCount(0);
   });
 
+  test('renders an elegant and readable login form', async ({ page }) => {
+    await page.goto('/');
+
+    const emailInput = page.getByLabel('Email');
+    const passwordInput = page.getByLabel('Password');
+    const submitButton = page.getByRole('button', { name: 'Log in' });
+    const main = page.locator('main');
+    const card = page.locator('section').first();
+
+    await expect(page.getByRole('heading', { name: 'Log in' })).toBeVisible();
+    await expect(page.getByText('Sign in with your existing backend account.')).toBeVisible();
+    await expect(emailInput).toBeVisible();
+    await expect(passwordInput).toBeVisible();
+    await expect(submitButton).toBeVisible();
+
+    await expect(main).toHaveCSS('color', 'rgb(241, 245, 249)');
+    await expect(card).toHaveCSS('backdrop-filter', /blur\(.+\)/);
+    await expect(emailInput).toHaveCSS('background-color', 'rgb(248, 250, 252)');
+    await expect(emailInput).toHaveCSS('color', 'rgb(2, 6, 23)');
+    await expect(passwordInput).toHaveCSS('background-color', 'rgb(248, 250, 252)');
+    await expect(passwordInput).toHaveCSS('color', 'rgb(2, 6, 23)');
+    await expect(submitButton).toHaveCSS('background-color', 'rgb(34, 211, 238)');
+    await expect(submitButton).toHaveCSS('color', 'rgb(2, 6, 23)');
+
+    await emailInput.fill('grace@example.com');
+    await passwordInput.fill('wrong-password');
+    await submitButton.click();
+
+    await expect(page.getByRole('button', { name: 'Logging in...' })).toBeDisabled();
+    await expect(page.getByText('Invalid credentials')).toBeVisible();
+    await expect(emailInput).toHaveValue('grace@example.com');
+  });
+
   test('clears an invalid stored token on reload', async ({ page }) => {
     await page.goto('/');
     await page.evaluate(() => {
