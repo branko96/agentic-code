@@ -1,301 +1,451 @@
 # planning
 
-I’m reading the relevant files.## 1. File map
+## 1. File map
 
-- `apps/frontend/src/app/page.tsx` — modify the existing homepage auth screen to add the polished auth-shell layout, explicit form control contrast/focus styling, clearer loading/authenticated states, and stable accessible labels/button text.
-- `tests/e2e/tests/homepage.spec.ts` — modify the homepage auth coverage to add UI-focused assertions for readable/stable login states while preserving the existing auth-flow expectations.
+modify apps/frontend/package.json — add the i18n runtime dependency and keep scripts unchanged.
 
-## 2. Risk assessment
+modify apps/frontend/next.config.js — enable locale-aware routing with a fixed locales array and default locale.
 
-- `apps/frontend/src/app/page.tsx:59-137` currently contains all unauthenticated, loading, and authenticated rendering, so visual refactoring can accidentally break:
-  - the initial “Checking session...” loading state
-  - label-to-input accessibility used by Playwright selectors
-  - button accessible name `"Log in"` used by tests
-  - inline error rendering for invalid credentials
-  - logout affordance and authenticated-state rendering
-- Because login state and UI live in one client component, moving markup can accidentally reset or hide `error`, `isSubmitting`, or `user` state at the wrong time.
-- Restyling the submit button can accidentally remove the disabled state tied to `isSubmitting`, which would violate the duplicate-submission guard.
-- Adding stronger class-based styling for dark/light contrast must not depend on global token changes, or it could widen blast radius beyond the requested screen.
-- Updating E2E tests to check styling-related behavior must avoid brittle CSS-value assertions that vary by browser; assertions should stay semantic and DOM-state oriented.
+modify apps/frontend/src/app/layout.tsx — make the root layout receive the active locale from the route segment and set `<html lang>` plus locale-specific metadata.
 
-## 3. Bite-sized implementation tasks
+create apps/frontend/src/app/[locale]/page.tsx — move the login screen into a locale-prefixed route and replace hardcoded UI copy with translation lookups.
 
-### Task 1: Lock in the login screen semantics with E2E coverage
+create apps/frontend/src/app/[locale]/layout.tsx — validate the locale route param and pass children through the localized app segment.
 
-Files: modify `tests/e2e/tests/homepage.spec.ts`
+create apps/frontend/src/app/[locale]/not-found.tsx — render a simple localized fallback for unsupported or missing locale routes.
 
-- [ ] Step: In `tests/e2e/tests/homepage.spec.ts`, add a new test after the existing invalid-credentials test that asserts the unauthenticated screen keeps stable accessible labels, visible loading-safe UI, and a disabled submit state during submission by adding exactly this test:
+create apps/frontend/src/i18n/config.ts — define the supported locales tuple, default locale, and locale validation helper.
 
-  ```ts
-  test('renders readable login controls with stable semantics', async ({ page }) => {
-    await page.goto('/');
+create apps/frontend/src/i18n/messages/en.ts — export the English message catalog used by the login page and layout metadata.
 
-    const emailInput = page.getByLabel('Email');
-    const passwordInput = page.getByLabel('Password');
-    const submitButton = page.getByRole('button', { name: 'Log in' });
+create apps/frontend/src/i18n/messages/pt.ts — export the Portuguese message catalog used by the login page and layout metadata.
 
-    await expect(page.getByRole('heading', { name: 'Log in' })).toBeVisible();
-    await expect(page.getByText('Sign in with your existing backend account.')).toBeVisible();
-    await expect(emailInput).toBeVisible();
-    await expect(passwordInput).toBeVisible();
-    await expect(submitButton).toBeVisible();
+create apps/frontend/src/i18n/get-messages.ts — map a locale string to the corresponding message catalog.
 
-    await emailInput.fill('grace@example.com');
-    await passwordInput.fill('wrong-password');
-    await submitButton.click();
+create apps/frontend/src/i18n/types.ts — define the message schema so both locale files stay structurally aligned.
 
-    await expect(page.getByRole('button', { name: 'Logging in...' })).toBeDisabled();
-    await expect(page.getByText('Invalid credentials')).toBeVisible();
-    await expect(emailInput).toHaveValue('grace@example.com');
-  });
-  ```
+## 2. Implementation tasks
 
-- [ ] Step: Run `pnpm --filter frontend exec playwright test tests/e2e/tests/homepage.spec.ts` — expected: new test fails because the current UI does not reliably expose the transient `"Logging in..."` disabled state long enough for the assertion, or equivalent failing assertion with non-zero exit code.
-- [ ] Step: git commit -m "test(login): cover homepage auth ui semantics"
+### Task 1: Add locale routing infrastructure
 
-### Task 2: Restyle the homepage login screen with an auth-shell layout and explicit control contrast
+Files: modify apps/frontend/package.json, modify apps/frontend/next.config.js, create apps/frontend/src/i18n/config.ts, create apps/frontend/src/i18n/types.ts
 
-Files: modify `apps/frontend/src/app/page.tsx`
+- [ ] Step: Update `apps/frontend/package.json` dependencies to install `next-intl`:
 
-- [ ] Step: In `apps/frontend/src/app/page.tsx`, replace the current component body markup with a single-page auth shell that preserves all existing state and handlers but updates the returned JSX and classes exactly as follows:
+```json
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf .next"
+  },
+  "dependencies": {
+    "next": "^14.1.0",
+    "next-intl": "^3.26.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "autoprefixer": "^10.4.17",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.1.0",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3"
+  }
+}
+```
 
-  ```tsx
-  'use client';
+- [ ] Step: Replace `apps/frontend/next.config.js` with locale-aware config:
 
-  import { FormEvent, useEffect, useState } from 'react';
-  import { clearToken, getMe, login, persistToken, readToken } from '../lib/auth';
-  import type { AuthUser } from '../types/auth';
+```js
+const withNextIntl = require('next-intl/plugin')('./src/i18n/get-messages.ts');
 
-  export default function Home() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [user, setUser] = useState<AuthUser | null>(null);
-    const [error, setError] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isCheckingSession, setIsCheckingSession] = useState(true);
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  swcMinify: true,
+};
 
-    useEffect(() => {
-      const token = readToken();
+module.exports = withNextIntl(nextConfig);
+```
 
-      if (!token) {
-        setIsCheckingSession(false);
-        return;
-      }
+- [ ] Step: Create `apps/frontend/src/i18n/config.ts`:
 
-      getMe(token)
-        .then((nextUser) => {
-          setUser(nextUser);
-        })
-        .catch(() => {
-          clearToken();
-          setUser(null);
-        })
-        .finally(() => {
-          setIsCheckingSession(false);
-        });
-    }, []);
+```ts
+export const locales = ['en', 'pt'] as const;
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-      event.preventDefault();
-      setError('');
-      setIsSubmitting(true);
+export type AppLocale = (typeof locales)[number];
 
-      try {
-        const response = await login({ email, password });
-        persistToken(response.accessToken);
-        setUser(response.user);
-      } catch (caughtError) {
-        setUser(null);
+export const defaultLocale: AppLocale = 'en';
+
+export function isValidLocale(locale: string): locale is AppLocale {
+  return locales.includes(locale as AppLocale);
+}
+```
+
+- [ ] Step: Create `apps/frontend/src/i18n/types.ts`:
+
+```ts
+export type Messages = {
+  metadata: {
+    title: string;
+    description: string;
+  };
+  auth: {
+    checkingSession: string;
+    loggedInTitle: string;
+    loggedInAs: string;
+    logout: string;
+    loginTitle: string;
+    loginDescription: string;
+    email: string;
+    password: string;
+    login: string;
+    loggingIn: string;
+    loginError: string;
+  };
+  errors: {
+    notFound: string;
+  };
+};
+```
+
+- [ ] Step: Run `pnpm --filter frontend add next-intl` — expected: exit code `0`
+- [ ] Step: Run `pnpm --filter frontend typecheck` — expected: exit code `0`
+- [ ] Step: git commit -m "feat(frontend): add locale routing foundation"
+
+### Task 2: Add translation catalogs and locale resolver
+
+Files: create apps/frontend/src/i18n/messages/en.ts, create apps/frontend/src/i18n/messages/pt.ts, create apps/frontend/src/i18n/get-messages.ts
+
+- [ ] Step: Create `apps/frontend/src/i18n/messages/en.ts`:
+
+```ts
+import type { Messages } from '../types';
+
+const en: Messages = {
+  metadata: {
+    title: 'Next.js + NestJS Boilerplate',
+    description: 'Full-stack monorepo boilerplate with AI agents',
+  },
+  auth: {
+    checkingSession: 'Checking session...',
+    loggedInTitle: 'You are logged in',
+    loggedInAs: 'Logged in as',
+    logout: 'Log out',
+    loginTitle: 'Log in',
+    loginDescription: 'Sign in with your existing backend account.',
+    email: 'Email',
+    password: 'Password',
+    login: 'Log in',
+    loggingIn: 'Logging in...',
+    loginError: 'Unable to log in',
+  },
+  errors: {
+    notFound: 'Page not found.',
+  },
+};
+
+export default en;
+```
+
+- [ ] Step: Create `apps/frontend/src/i18n/messages/pt.ts`:
+
+```ts
+import type { Messages } from '../types';
+
+const pt: Messages = {
+  metadata: {
+    title: 'Boilerplate Next.js + NestJS',
+    description: 'Boilerplate full-stack em monorepo com agentes de IA',
+  },
+  auth: {
+    checkingSession: 'Verificando sessão...',
+    loggedInTitle: 'Você está autenticado',
+    loggedInAs: 'Autenticado como',
+    logout: 'Sair',
+    loginTitle: 'Entrar',
+    loginDescription: 'Entre com a sua conta existente do backend.',
+    email: 'E-mail',
+    password: 'Senha',
+    login: 'Entrar',
+    loggingIn: 'Entrando...',
+    loginError: 'Não foi possível entrar',
+  },
+  errors: {
+    notFound: 'Página não encontrada.',
+  },
+};
+
+export default pt;
+```
+
+- [ ] Step: Create `apps/frontend/src/i18n/get-messages.ts`:
+
+```ts
+import { getRequestConfig } from 'next-intl/server';
+import { defaultLocale, isValidLocale } from './config';
+import en from './messages/en';
+import pt from './messages/pt';
+
+export default getRequestConfig(async ({ locale }) => {
+  const resolvedLocale = isValidLocale(locale ?? '') ? locale : defaultLocale;
+
+  return {
+    locale: resolvedLocale,
+    messages: resolvedLocale === 'pt' ? pt : en,
+  };
+});
+```
+
+- [ ] Step: Run `pnpm --filter frontend typecheck` — expected: exit code `0`
+- [ ] Step: Run `pnpm --filter frontend lint` — expected: exit code `0`
+- [ ] Step: git commit -m "feat(frontend): add translation catalogs"
+
+### Task 3: Move the app into a localized route segment
+
+Files: modify apps/frontend/src/app/layout.tsx, create apps/frontend/src/app/[locale]/layout.tsx, create apps/frontend/src/app/[locale]/not-found.tsx
+
+- [ ] Step: Replace `apps/frontend/src/app/layout.tsx` with a minimal root layout that just renders children:
+
+```tsx
+import './globals.css';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return children;
+}
+```
+
+- [ ] Step: Create `apps/frontend/src/app/[locale]/layout.tsx`:
+
+```tsx
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { defaultLocale, isValidLocale, type AppLocale } from '@/i18n/config';
+import { getMessages } from 'next-intl/server';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { locale: string };
+}): Promise<Metadata> {
+  const locale: AppLocale = isValidLocale(params.locale) ? params.locale : defaultLocale;
+  const messages = await getMessages({ locale });
+
+  return {
+    title: messages.metadata.title,
+    description: messages.metadata.description,
+  };
+}
+
+export default function LocaleLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: { locale: string };
+}) {
+  if (!isValidLocale(params.locale)) {
+    notFound();
+  }
+
+  return (
+    <html lang={params.locale}>
+      <body className="antialiased">{children}</body>
+    </html>
+  );
+}
+```
+
+- [ ] Step: Create `apps/frontend/src/app/[locale]/not-found.tsx`:
+
+```tsx
+import { getMessages } from 'next-intl/server';
+
+export default async function NotFound() {
+  const messages = await getMessages();
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12 text-slate-100">
+      <p className="text-sm text-slate-300">{messages.errors.notFound}</p>
+    </main>
+  );
+}
+```
+
+- [ ] Step: Run `pnpm --filter frontend build` — expected: output contains `Compiled successfully`
+- [ ] Step: Run `pnpm --filter frontend typecheck` — expected: exit code `0`
+- [ ] Step: git commit -m "feat(frontend): add localized app layout"
+
+### Task 4: Localize the login page
+
+Files: create apps/frontend/src/app/[locale]/page.tsx
+
+- [ ] Step: Delete `apps/frontend/src/app/page.tsx` and create `apps/frontend/src/app/[locale]/page.tsx` with the localized login screen:
+
+```tsx
+'use client';
+
+import { FormEvent, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { clearToken, getMe, login, persistToken, readToken } from '@/lib/auth';
+import type { AuthUser } from '@/types/auth';
+
+export default function Home() {
+  const t = useTranslations();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  useEffect(() => {
+    const token = readToken();
+
+    if (!token) {
+      setIsCheckingSession(false);
+      return;
+    }
+
+    getMe(token)
+      .then((nextUser) => {
+        setUser(nextUser);
+      })
+      .catch(() => {
         clearToken();
-        setError(caughtError instanceof Error ? caughtError.message : 'Unable to log in');
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
+        setUser(null);
+      })
+      .finally(() => {
+        setIsCheckingSession(false);
+      });
+  }, []);
 
-    function handleLogout() {
-      clearToken();
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    setIsSubmitting(true);
+
+    try {
+      const response = await login({ email, password });
+      persistToken(response.accessToken);
+      setUser(response.user);
+    } catch (caughtError) {
       setUser(null);
-      setPassword('');
+      clearToken();
+      setError(caughtError instanceof Error ? caughtError.message : t('auth.loginError'));
+    } finally {
+      setIsSubmitting(false);
     }
+  }
 
-    if (isCheckingSession) {
-      return (
-        <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-16 text-slate-100">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 text-center shadow-2xl shadow-slate-950/40 backdrop-blur">
-            <p className="text-sm font-medium tracking-[0.2em] text-sky-200 uppercase">
-              Welcome back
-            </p>
-            <h1 className="mt-4 text-3xl font-semibold text-white">Checking session...</h1>
-            <p className="mt-3 text-sm text-slate-300">
-              Restoring your saved session before showing the sign-in form.
-            </p>
-          </div>
-        </main>
-      );
-    }
+  function handleLogout() {
+    clearToken();
+    setUser(null);
+    setPassword('');
+  }
 
-    if (user) {
-      return (
-        <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-16 text-slate-100">
-          <section className="w-full max-w-md rounded-3xl border border-white/10 bg-white px-8 py-10 text-slate-950 shadow-2xl shadow-slate-950/40">
-            <p className="text-sm font-semibold tracking-[0.2em] text-sky-700 uppercase">
-              Authenticated
-            </p>
-            <h1 className="mt-4 text-3xl font-bold text-slate-950">You are logged in</h1>
-            <p className="mt-4 text-sm text-slate-600">
-              Logged in as {user.firstName} {user.lastName}
-            </p>
-            <p className="mt-1 text-sm text-slate-500">{user.email}</p>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
-            >
-              Log out
-            </button>
-          </section>
-        </main>
-      );
-    }
-
+  if (isCheckingSession) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-16 text-slate-100">
-        <section className="grid w-full max-w-5xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl shadow-slate-950/40 backdrop-blur sm:p-10">
-            <p className="text-sm font-semibold tracking-[0.2em] text-sky-200 uppercase">
-              Agentic Code
-            </p>
-            <h1 className="mt-4 text-4xl font-bold tracking-tight text-white sm:text-5xl">
-              Log in
-            </h1>
-            <p className="mt-4 max-w-lg text-base leading-7 text-slate-300">
-              Sign in with your existing backend account.
-            </p>
-            <div className="mt-8 grid gap-4 text-sm text-slate-300 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
-                <p className="font-semibold text-white">Readable inputs</p>
-                <p className="mt-1">
-                  High-contrast fields keep typed text visible while you sign in.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
-                <p className="font-semibold text-white">Fast session restore</p>
-                <p className="mt-1">Saved sessions are checked automatically when you return.</p>
-              </div>
-            </div>
-          </div>
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12 text-slate-100">
+        <p className="text-sm text-slate-300">{t('auth.checkingSession')}</p>
+      </main>
+    );
+  }
 
-          <section className="rounded-3xl border border-white/10 bg-white px-8 py-10 text-slate-950 shadow-2xl shadow-slate-950/40 sm:px-10">
-            <h2 className="text-2xl font-semibold text-slate-950">Welcome back</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Enter your email and password to continue.
-            </p>
-
-            <form className="mt-8 flex flex-col gap-5" onSubmit={handleSubmit}>
-              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                Email
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  required
-                />
-              </label>
-
-              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                Password
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
-                  required
-                />
-              </label>
-
-              {error ? (
-                <p
-                  role="alert"
-                  className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-                >
-                  {error}
-                </p>
-              ) : null}
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="inline-flex w-full items-center justify-center rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-400"
-              >
-                {isSubmitting ? 'Logging in...' : 'Log in'}
-              </button>
-            </form>
-          </section>
+  if (user) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),_transparent_40%),linear-gradient(180deg,_#020617_0%,_#111827_100%)] px-6 py-12 text-slate-100">
+        <section className="w-full max-w-md rounded-3xl border border-white/10 bg-white/10 p-8 shadow-2xl shadow-cyan-950/30 backdrop-blur">
+          <h1 className="text-3xl font-semibold tracking-tight text-white">
+            {t('auth.loggedInTitle')}
+          </h1>
+          <p className="mt-4 text-slate-300">
+            {t('auth.loggedInAs')} {user.firstName} {user.lastName}
+          </p>
+          <p className="mt-2 break-all text-slate-200">{user.email}</p>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-6 inline-flex items-center justify-center rounded-xl bg-cyan-400 px-4 py-2.5 font-medium text-slate-950 transition hover:bg-cyan-300 disabled:opacity-50"
+          >
+            {t('auth.logout')}
+          </button>
         </section>
       </main>
     );
   }
-  ```
 
-- [ ] Step: Run `pnpm --filter frontend exec playwright test tests/e2e/tests/homepage.spec.ts` — expected: all homepage tests pass with exit code `0`.
-- [ ] Step: git commit -m "feat(login): polish homepage auth shell"
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.2),_transparent_38%),linear-gradient(180deg,_#020617_0%,_#111827_100%)] px-6 py-12 text-slate-100">
+      <section className="w-full max-w-md rounded-3xl border border-white/10 bg-white/10 p-8 shadow-2xl shadow-cyan-950/30 backdrop-blur">
+        <h1 className="text-3xl font-semibold tracking-tight text-white">{t('auth.loginTitle')}</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-300">{t('auth.loginDescription')}</p>
 
-### Task 3: Verify the frontend build still passes with the updated login UI
+        <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
+          <label className="flex flex-col gap-2 text-sm font-medium text-slate-100">
+            {t('auth.email')}
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="rounded-xl border border-white/15 bg-slate-50 px-3 py-2.5 text-slate-950 placeholder:text-slate-500 outline-none transition focus:border-cyan-300 focus:ring-2 focus:ring-cyan-400/40"
+              autoComplete="email"
+              required
+            />
+          </label>
 
-Files: modify `apps/frontend/src/app/page.tsx`
+          <label className="flex flex-col gap-2 text-sm font-medium text-slate-100">
+            {t('auth.password')}
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="rounded-xl border border-white/15 bg-slate-50 px-3 py-2.5 text-slate-950 placeholder:text-slate-500 outline-none transition focus:border-cyan-300 focus:ring-2 focus:ring-cyan-400/40"
+              autoComplete="current-password"
+              required
+            />
+          </label>
 
-- [ ] Step: In `apps/frontend/src/app/page.tsx`, make the authenticated and unauthenticated card sections use the same primary button class string to avoid unnecessary divergence by changing the logout button className from:
-  ```tsx
-  className =
-    'mt-8 inline-flex w-full items-center justify-center rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2';
-  ```
-  to:
-  ```tsx
-  className =
-    'mt-8 inline-flex w-full items-center justify-center rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2';
-  ```
-  and keep the submit button className unchanged so both button semantics remain stable and no extra abstraction is introduced.
-- [ ] Step: Run `pnpm --filter frontend build` — expected: build succeeds with exit code `0` and Next.js reports a successful production build.
-- [ ] Step: git commit -m "chore(login): verify polished homepage build"
+          {error ? (
+            <p className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
+              {error}
+            </p>
+          ) : null}
 
-## 4. Self-review
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="inline-flex items-center justify-center rounded-xl bg-cyan-400 px-4 py-2.5 font-medium text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSubmitting ? t('auth.loggingIn') : t('auth.login')}
+          </button>
+        </form>
+      </section>
+    </main>
+  );
+}
+```
 
-### Acceptance criteria coverage
+- [ ] Step: Run `pnpm --filter frontend build` — expected: output contains `Compiled successfully`
+- [ ] Step: Run `pnpm --filter frontend lint` — expected: exit code `0`
+- [ ] Step: git commit -m "feat(frontend): localize auth page"
 
-1. **Typed text is always visible in the email and password inputs**  
-   Covered by Task 2 via explicit `bg-white` + `text-slate-950` input styling in `apps/frontend/src/app/page.tsx`.
+## 3. Self-review
 
-2. **Input placeholders/labels remain readable and distinct from entered text**  
-   Covered by Task 2 via visible label text plus `placeholder:text-slate-400` and `text-slate-950`.
-
-3. **The login screen has a polished card-like layout**  
-   Covered by Task 2 via the two-panel auth shell and card surfaces in `apps/frontend/src/app/page.tsx`.
-
-4. **Interactive states are visually clear**  
-   Covered by Task 2 via focus ring classes on inputs/buttons and disabled/loading button state; partially verified by Task 1 through `"Logging in..."` disabled assertion.
-
-5. **Existing login behavior remains unchanged**  
-   Covered by existing E2E flow assertions plus Task 2 implementation preserving all current auth logic and handlers.
-
-6. **Accessibility semantics remain testable with current patterns**  
-   Covered by Task 1 and Task 2 preserving `Email`, `Password`, and `"Log in"` accessible names.
-
-7. **The loading state remains user-visible**  
-   Covered by Task 2 via the explicit loading card and by keeping `isCheckingSession` branch intact.
-
-8. **No new authentication routes or flows are introduced**  
-   Covered by limiting changes to `apps/frontend/src/app/page.tsx` and `tests/e2e/tests/homepage.spec.ts`.
-
-### Gaps found and fixed
-
-- I removed any global-theme refactor from the plan because the spec marks app-wide theming as out of scope.
-- I did not add a new shared component file because the spec asks for contained planning only, and the current scope does not require a reusable abstraction to satisfy acceptance criteria.
-- I kept all type and function names unchanged: `LoginInput`, `AuthUser`, `AuthResponse`, `login`, `getMe`, and `apiFetch`.
-- No new modules/services/components are introduced, so there are no missing parent imports.
-- No placeholders remain. The only weak point is **Task 3**, which is purely a verification/cleanup task and does not introduce new code; that is intentional so the plan still ends with a build validation commit without inventing extra scope.
+- The repo has a single React surface at `apps/frontend/src/app/page.tsx`, so the plan scopes i18n to that app only.
+- The description only says `i18n react`, so the smallest complete implementation is route-based locale support plus translated UI strings for the existing login page.
+- Every user-visible string currently hardcoded in `apps/frontend/src/app/layout.tsx` and `apps/frontend/src/app/page.tsx` is mapped into translation catalogs.
+- The plan avoids tests entirely, per instruction.
+- The plan includes exact files, exact code, exact verification commands, and at least one commit per task.
+- Gap fixed: because App Router locale routing needs a route segment, the plan explicitly moves `src/app/page.tsx` into `src/app/[locale]/page.tsx` and adds `[locale]/layout.tsx`; without that, `react i18n` would only translate strings but not provide actual locale-aware routing.
