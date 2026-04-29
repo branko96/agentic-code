@@ -1,10 +1,12 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { clearToken, getMe, login, persistToken, readToken } from '../lib/auth';
-import type { AuthUser } from '../types/auth';
+import { useTranslations } from 'next-intl';
+import { clearToken, getMe, login, persistToken, readToken } from '@/lib/auth';
+import type { AuthUser } from '@/types/auth';
 
 export default function Home() {
+  const t = useTranslations();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -45,7 +47,7 @@ export default function Home() {
     } catch (caughtError) {
       setUser(null);
       clearToken();
-      setError(caughtError instanceof Error ? caughtError.message : 'Unable to log in');
+      setError(caughtError instanceof Error ? caughtError.message : t('auth.loginError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -60,7 +62,7 @@ export default function Home() {
   if (isCheckingSession) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12 text-slate-100">
-        <p className="text-sm text-slate-300">Checking session...</p>
+        <p className="text-sm text-slate-300">{t('auth.checkingSession')}</p>
       </main>
     );
   }
@@ -69,9 +71,11 @@ export default function Home() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),_transparent_40%),linear-gradient(180deg,_#020617_0%,_#111827_100%)] px-6 py-12 text-slate-100">
         <section className="w-full max-w-md rounded-3xl border border-white/10 bg-white/10 p-8 shadow-2xl shadow-cyan-950/30 backdrop-blur">
-          <h1 className="text-3xl font-semibold tracking-tight text-white">You are logged in</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-white">
+            {t('auth.loggedInTitle')}
+          </h1>
           <p className="mt-4 text-slate-300">
-            Logged in as {user.firstName} {user.lastName}
+            {t('auth.loggedInAs')} {user.firstName} {user.lastName}
           </p>
           <p className="mt-2 break-all text-slate-200">{user.email}</p>
           <button
@@ -79,7 +83,7 @@ export default function Home() {
             onClick={handleLogout}
             className="mt-6 inline-flex items-center justify-center rounded-xl bg-cyan-400 px-4 py-2.5 font-medium text-slate-950 transition hover:bg-cyan-300 disabled:opacity-50"
           >
-            Log out
+            {t('auth.logout')}
           </button>
         </section>
       </main>
@@ -89,14 +93,12 @@ export default function Home() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.2),_transparent_38%),linear-gradient(180deg,_#020617_0%,_#111827_100%)] px-6 py-12 text-slate-100">
       <section className="w-full max-w-md rounded-3xl border border-white/10 bg-white/10 p-8 shadow-2xl shadow-cyan-950/30 backdrop-blur">
-        <h1 className="text-3xl font-semibold tracking-tight text-white">Log in</h1>
-        <p className="mt-2 text-sm leading-6 text-slate-300">
-          Sign in with your existing backend account.
-        </p>
+        <h1 className="text-3xl font-semibold tracking-tight text-white">{t('auth.loginTitle')}</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-300">{t('auth.loginDescription')}</p>
 
         <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
           <label className="flex flex-col gap-2 text-sm font-medium text-slate-100">
-            Email
+            {t('auth.email')}
             <input
               type="email"
               value={email}
@@ -108,7 +110,7 @@ export default function Home() {
           </label>
 
           <label className="flex flex-col gap-2 text-sm font-medium text-slate-100">
-            Password
+            {t('auth.password')}
             <input
               type="password"
               value={password}
@@ -130,7 +132,7 @@ export default function Home() {
             disabled={isSubmitting}
             className="inline-flex items-center justify-center rounded-xl bg-cyan-400 px-4 py-2.5 font-medium text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSubmitting ? 'Logging in...' : 'Log in'}
+            {isSubmitting ? t('auth.loggingIn') : t('auth.login')}
           </button>
         </form>
       </section>
