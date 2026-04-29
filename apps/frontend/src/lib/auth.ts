@@ -1,5 +1,5 @@
 import { apiFetch } from './api';
-import type { AuthResponse, AuthUser, LoginInput } from '../types/auth';
+import type { AuthResponse, AuthUser, LoginInput, NavbarConfig } from '../types/auth';
 
 const AUTH_TOKEN_STORAGE_KEY = 'accessToken';
 
@@ -28,6 +28,13 @@ export function login(input: LoginInput) {
 
 export function getMe(token: string) {
   return apiFetch<AuthUser>('/auth/me', {
+    method: 'GET',
+    token,
+  });
+}
+
+export function getConfig(token: string) {
+  return apiFetch<NavbarConfig>('/config', {
     method: 'GET',
     token,
   });

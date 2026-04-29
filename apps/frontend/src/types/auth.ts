@@ -20,3 +20,9 @@ export type AuthResponse = {
 export type ApiErrorResponse = {
   message?: string | string[];
 };
+
+export type NavbarConfig = {
+  appName: string;
+  environment: string;
+  supportEmail: string;
+};
