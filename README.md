@@ -68,6 +68,7 @@ cd nextjs-nestjs-boilerplate
 ```
 
 The setup script will:
+
 - Install all dependencies
 - Create environment files
 - Install Playwright browsers
@@ -82,6 +83,7 @@ Update the backend environment variables:
 MONGODB_URI=mongodb://localhost:27017/your-database
 PORT=3001
 FRONTEND_URL=http://localhost:3000
+SUPPORT_EMAIL=support@example.com
 ```
 
 ### 3. Development
@@ -223,6 +225,7 @@ Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
 ```
 
 Examples:
+
 ```
 feat: add user authentication
 fix(backend): resolve database connection issue
@@ -232,6 +235,7 @@ docs: update README with setup instructions
 ## Technology Stack
 
 ### Frontend
+
 - **Framework**: Next.js 14 (App Router)
 - **UI Library**: React 18
 - **Language**: TypeScript
@@ -240,6 +244,7 @@ docs: update README with setup instructions
 - **Formatting**: Prettier
 
 ### Backend
+
 - **Framework**: NestJS
 - **Database**: MongoDB
 - **ODM**: Mongoose
@@ -248,11 +253,13 @@ docs: update README with setup instructions
 - **Testing**: Jest
 
 ### Testing
+
 - **E2E**: Playwright
 - **Unit**: Jest
 - **Coverage**: NYC
 
 ### DevOps
+
 - **CI/CD**: GitHub Actions
 - **Package Manager**: pnpm
 - **Git Hooks**: Husky
@@ -305,11 +312,13 @@ cd apps/backend && pnpm start:prod
 ### Environment Variables
 
 **Frontend** (`apps/frontend/.env.local`):
+
 ```
 NEXT_PUBLIC_API_URL=https://your-api-url.com
 ```
 
 **Backend** (`apps/backend/.env`):
+
 ```
 MONGODB_URI=mongodb://your-mongodb-uri
 PORT=3001
@@ -399,6 +408,7 @@ MIT License - feel free to use this boilerplate for your projects.
 ## Support
 
 For issues and questions:
+
 - Open an issue on GitHub
 - Check [AGENTS.md](./AGENTS.md) for AI agent assistance
 - Review the troubleshooting section
@@ -406,6 +416,7 @@ For issues and questions:
 ## Roadmap
 
 Future enhancements:
+
 - [ ] Docker support
 - [ ] GraphQL API option
 - [ ] Authentication boilerplate (JWT, OAuth)
