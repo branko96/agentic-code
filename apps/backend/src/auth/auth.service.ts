@@ -3,15 +3,9 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { Model } from 'mongoose';
-import {
-  User,
-  UserDocument,
-  toUserResponse,
-} from '../users/schemas/user.schema';
+import { UserDocument } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -21,7 +15,6 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -61,11 +54,6 @@ export class AuthService {
     }
 
     return user;
-  }
-
-  async getProfile(userId: string) {
-    const user = await this.userModel.findById(userId).lean().exec();
-    return user ? toUserResponse(user) : null;
   }
 
   private async buildAuthResponse(user: UserDocument) {

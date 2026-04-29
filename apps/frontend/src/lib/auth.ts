@@ -1,6 +1,8 @@
 import { apiFetch } from './api';
 import type { AuthResponse, AuthUser, LoginInput } from '../types/auth';
 
+export const LOGIN_REDIRECT_PATH = '/dashboard';
+
 const AUTH_TOKEN_STORAGE_KEY = 'accessToken';
 
 export function readToken() {

@@ -1,7 +1,15 @@
 'use client';
 
+import Link from 'next/link';
 import { FormEvent, useEffect, useState } from 'react';
-import { clearToken, getMe, login, persistToken, readToken } from '../lib/auth';
+import {
+  LOGIN_REDIRECT_PATH,
+  clearToken,
+  getMe,
+  login,
+  persistToken,
+  readToken,
+} from '../lib/auth';
 import type { AuthUser } from '../types/auth';
 
 export default function Home() {
@@ -42,6 +50,7 @@ export default function Home() {
       const response = await login({ email, password });
       persistToken(response.accessToken);
       setUser(response.user);
+      window.location.assign(LOGIN_REDIRECT_PATH);
     } catch (caughtError) {
       setUser(null);
       clearToken();
@@ -74,13 +83,21 @@ export default function Home() {
             Logged in as {user.firstName} {user.lastName}
           </p>
           <p className="mt-2 break-all text-slate-200">{user.email}</p>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="mt-6 inline-flex items-center justify-center rounded-xl bg-cyan-400 px-4 py-2.5 font-medium text-slate-950 transition hover:bg-cyan-300 disabled:opacity-50"
-          >
-            Log out
-          </button>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href={LOGIN_REDIRECT_PATH}
+              className="inline-flex items-center justify-center rounded-xl border border-white/15 px-4 py-2.5 font-medium text-slate-100 transition hover:bg-white/10"
+            >
+              Go to dashboard
+            </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex items-center justify-center rounded-xl bg-cyan-400 px-4 py-2.5 font-medium text-slate-950 transition hover:bg-cyan-300 disabled:opacity-50"
+            >
+              Log out
+            </button>
+          </div>
         </section>
       </main>
     );

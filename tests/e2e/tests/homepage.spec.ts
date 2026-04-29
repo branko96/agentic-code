@@ -25,12 +25,14 @@ test.describe('Homepage login', () => {
     await page.getByLabel('Password').fill('password123');
     await page.getByRole('button', { name: 'Log in' }).click();
 
-    await expect(page.getByRole('heading', { name: 'You are logged in' })).toBeVisible();
+    await expect(page).toHaveURL('/dashboard');
+    await expect(page.getByRole('heading', { name: 'Welcome back, Ada' })).toBeVisible();
     await expect(page.getByText(email)).toBeVisible();
 
     await page.reload();
 
-    await expect(page.getByRole('heading', { name: 'You are logged in' })).toBeVisible();
+    await expect(page).toHaveURL('/dashboard');
+    await expect(page.getByRole('heading', { name: 'Welcome back, Ada' })).toBeVisible();
     await expect(page.getByText(email)).toBeVisible();
   });
 
@@ -44,7 +46,8 @@ test.describe('Homepage login', () => {
     await page.getByRole('button', { name: 'Log in' }).click();
 
     await expect(page.getByText('Invalid credentials')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'You are logged in' })).toHaveCount(0);
+    await expect(page).toHaveURL('/');
+    await expect(page.getByRole('heading', { name: 'Welcome back, Ada' })).toHaveCount(0);
   });
 
   test('renders an elegant and readable login form', async ({ page }) => {
@@ -80,14 +83,18 @@ test.describe('Homepage login', () => {
     await expect(emailInput).toHaveValue('grace@example.com');
   });
 
-  test('clears an invalid stored token on reload', async ({ page }) => {
-    await page.goto('/');
+  test('redirects protected routes back home when no valid token exists', async ({ page }) => {
+    await page.goto('/dashboard');
+
+    await expect(page).toHaveURL('/');
+    await expect(page.getByRole('heading', { name: 'Log in' })).toBeVisible();
+
     await page.evaluate(() => {
       window.localStorage.setItem('accessToken', 'invalid-token');
     });
-    await page.reload();
+    await page.goto('/dashboard');
 
+    await expect(page).toHaveURL('/');
     await expect(page.getByRole('heading', { name: 'Log in' })).toBeVisible();
-    await expect(page.getByText('You are logged in')).toHaveCount(0);
   });
 });

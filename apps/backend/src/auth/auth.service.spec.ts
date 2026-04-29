@@ -1,8 +1,6 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { Model } from 'mongoose';
-import { UserDocument } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
 
@@ -37,7 +35,6 @@ describe('AuthService', () => {
   let jwtService: {
     signAsync: jest.Mock<Promise<string>, [{ sub: string; email: string }]>;
   };
-  let userModel: Pick<Model<UserDocument>, 'findById'>;
 
   beforeEach(() => {
     usersService = {
@@ -49,14 +46,9 @@ describe('AuthService', () => {
       signAsync: jest.fn().mockResolvedValue('signed-token'),
     };
 
-    userModel = {
-      findById: jest.fn(),
-    } as unknown as Pick<Model<UserDocument>, 'findById'>;
-
     authService = new AuthService(
       usersService as unknown as UsersService,
       jwtService as unknown as JwtService,
-      userModel as Model<UserDocument>,
     );
   });
 
@@ -165,27 +157,5 @@ describe('AuthService', () => {
         password: 'wrong-password',
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
-  });
-
-  it('returns the authenticated profile when it exists', async () => {
-    const lean = jest.fn().mockReturnValue({
-      exec: jest.fn().mockResolvedValue({
-        _id: { toString: () => 'user-id' },
-        firstName: 'Ada',
-        lastName: 'Lovelace',
-        email: 'ada@example.com',
-      }),
-    });
-
-    (userModel.findById as jest.Mock).mockReturnValue({ lean });
-
-    await expect(authService.getProfile('user-id')).resolves.toEqual({
-      id: 'user-id',
-      firstName: 'Ada',
-      lastName: 'Lovelace',
-      email: 'ada@example.com',
-      createdAt: undefined,
-      updatedAt: undefined,
-    });
   });
 });

@@ -1,19 +1,15 @@
-import type { Metadata } from 'next'
-import './globals.css'
+import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Next.js + NestJS Boilerplate',
-  description: 'Full-stack monorepo boilerplate with AI agents',
-}
+  title: 'Agentic Code Auth Demo',
+  description: 'Frontend and backend auth flow for the monorepo demo app',
+};
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className="antialiased">{children}</body>
     </html>
-  )
+  );
 }

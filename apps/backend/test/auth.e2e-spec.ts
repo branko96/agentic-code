@@ -75,7 +75,17 @@ describe('AuthController (e2e)', () => {
       .set('Authorization', `Bearer ${loginResponse.body.accessToken}`)
       .expect(200);
 
+    const usersMeResponse = await request(app.getHttpServer())
+      .get('/users/me')
+      .set('Authorization', `Bearer ${loginResponse.body.accessToken}`)
+      .expect(200);
+
     expect(meResponse.body).toMatchObject({
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      email: 'ada@example.com',
+    });
+    expect(usersMeResponse.body).toMatchObject({
       firstName: 'Ada',
       lastName: 'Lovelace',
       email: 'ada@example.com',

@@ -2,98 +2,118 @@
 
 ## 1. Clarifying questions (as assumptions)
 
-1. **Assumption: the login UI to improve is the current homepage login screen at `apps/frontend/src/app/page.tsx:6`.**  
-   Why: there is no separate `/login` route yet, and the existing auth UI lives directly on `/`.
+1. **Assumption: the current `/` route should remain the login page, and the new authenticated destination should be `/home`.**  
+   Why: hoy el login vive en `apps/frontend/src/app/page.tsx:6` y pediste “redirija a una nueva page llamada home”.
 
-2. **Assumption: this task is strictly visual/UX polish plus fixing input readability, not an auth-flow redesign.**  
-   Why: the issue described is about the screen looking “bonita y elegante” and inputs becoming unreadable while typing, not about login behavior.
+2. **Assumption: the redirect should happen only after a successful login response, not pre-login based on an existing token.**  
+   Why: el comportamiento actual en `apps/frontend/src/app/page.tsx:14` resuelve sesión en la misma página; mover a `/home` puede mantenerse mínimo si el submit exitoso navega ahí.
 
-3. **Assumption: preserving the current login behavior and storage model is required.**  
-   Why: `apps/frontend/src/app/page.tsx:14-57`, `apps/frontend/src/lib/auth.ts:3-33`, and the Playwright coverage in `tests/e2e/tests/homepage.spec.ts:17-59` already define a working login/session flow.
+3. **Assumption: `/home` is intended to be an authenticated page and should not show user data or the users table without a valid token.**  
+   Why: ya existe el patrón de token JWT + `/auth/me` en `apps/frontend/src/lib/auth.ts:28` y `apps/backend/src/auth/auth.controller.ts:29`.
 
-4. **Assumption: dark-mode auto-theming is currently active and is the likely cause of the unreadable input text.**  
-   Why: `apps/frontend/src/app/globals.css:9-14` swaps CSS variables based on `prefers-color-scheme`, while the inputs in `apps/frontend/src/app/page.tsx:97-118` only have `rounded border px-3 py-2` and no explicit background/text styling.
+4. **Assumption: the users table should list all users from the backend, not just the currently logged-in user.**  
+   Why: pediste “tabla de usuarios que tenga llamada a la api de usuarios”.
 
-5. **Assumption: we should stay within the existing stack: Next.js App Router + Tailwind, no new UI library.**  
-   Why: `apps/frontend/package.json:12-26` only includes Next/React/Tailwind, and this repo currently favors minimal implementations.
+5. **Assumption: exposing the user list to any authenticated user is acceptable for this repo’s current scope.**  
+   Why: no existe hoy una noción de roles/permissions en backend (`apps/backend/src/auth`, `apps/backend/src/users`), así que cualquier control más fino cambiaría el alcance.
 
-6. **Assumption: the user wants a single-screen enhancement, not a broader brand system or full design system.**  
-   Why: nothing in the codebase indicates an existing design token system beyond the base CSS variables in `apps/frontend/src/app/globals.css:4-20`.
+6. **Assumption: the backend currently does not have a `GET /users` endpoint and it should be created.**  
+   Why: `apps/backend/src/users/users.module.ts:1` solo registra servicio; no hay controller, ni método `findAll` en `apps/backend/src/users/users.service.ts:6`.
 
-7. **Assumption: current E2E selectors and semantics should remain stable where practical.**  
-   Why: `tests/e2e/tests/homepage.spec.ts:23-27` and `:41-45` depend on visible labels and button text, so large copy changes could invalidate test behavior.
+7. **Assumption: the users API response must exclude sensitive fields like `passwordHash`.**  
+   Why: el schema ya define `toUserResponse` en `apps/backend/src/users/schemas/user.schema.ts:31` y auth tests ya validan que `passwordHash` no salga en responses (`apps/backend/test/auth.e2e-spec.ts:62`).
 
-8. **Assumption: accessibility should improve together with appearance.**  
-   Why: the current issue is fundamentally a contrast/readability bug, and fixing it correctly implies visible text, focus states, and clear affordances.
+8. **Assumption: the navbar only needs a functional logout icon/button, not a full navigation system with multiple sections.**  
+   Why: el pedido menciona navbar singular + logout funcional, sin más items.
+
+9. **Assumption: “logout funcional” means clearing the stored JWT and returning the user to the login page.**  
+   Why: esa es la semántica ya implementada localmente en `apps/frontend/src/app/page.tsx:53`.
+
+10. **Assumption: adding an icon can be done without introducing a third-party icon library.**  
+    Why: el frontend hoy solo depende de Next/React/Tailwind (`apps/frontend/package.json:12`), así que agregar una lib sería una decisión extra.
+
+11. **Assumption: the existing frontend architecture should stay client-side for auth state and data fetching.**  
+    Why: el login, token persistence y `/auth/me` ya están implementados en client components/utilities (`apps/frontend/src/app/page.tsx:1`, `apps/frontend/src/lib/auth.ts:5`).
+
+12. **Assumption: the users table can load directly from the browser using the same bearer token pattern as `/auth/me`.**  
+    Why: `apiFetch` ya soporta token headers en `apps/frontend/src/lib/api.ts:8`.
+
+13. **Assumption: no pagination, sorting, or search is required for the users table in this task.**  
+    Why: no fue pedido, y hoy no existe soporte backend/frontend para ello.
+
+14. **Assumption: no registration flow changes are required.**  
+    Why: el pedido solo afecta login redirect, new home page, logout y list users.
+
+15. **Assumption: preserving the current visual style is preferable over redesigning the app.**  
+    Why: la UI actual ya tiene un estilo consistente en `apps/frontend/src/app/page.tsx:69` y `:89`.
 
 ---
 
 ## 2. Three implementation approaches
 
-### Approach A — **Tailwind Refresh**
+### Approach 1: **Client Split**
 
-**Core idea:**  
-Keep the current page structure and auth logic intact, but restyle the login screen directly in `apps/frontend/src/app/page.tsx` using Tailwind utility classes. Add explicit input surface/text/border/focus styles and a more polished card/background composition.
+**Core idea**  
+Keep `/` as the login route and create a separate `/home` page as a client component. After successful login, persist the token and navigate to `/home`; that page validates the token, renders the navbar/logout control, and fetches users from a new authenticated backend endpoint.
 
 **Pros**
 
-- Smallest change set
-- Lowest regression risk to auth logic
-- Fastest path to fixing white-on-white input text
-- Keeps current Playwright expectations mostly intact
+- Minimal change to current architecture.
+- Reuses existing token storage and `apiFetch` patterns.
+- Smallest blast radius across frontend and backend.
+- Clear separation between unauthenticated and authenticated screens.
 
 **Cons**
 
-- Styling remains page-local and somewhat duplicated if more auth screens are added later
-- Harder to reuse if register/dashboard get similar treatment later
-- Can become visually improved without creating any shared UI conventions
+- Auth guarding remains client-side, so redirects happen after page load.
+- Token stays in `localStorage`, which is acceptable for current code but not the strongest auth model.
+- Some auth-check logic may exist in more than one page unless factored carefully.
 
 ---
 
-### Approach B — **Auth Shell**
+### Approach 2: **Route Group**
 
-**Core idea:**  
-Introduce a small reusable visual wrapper for auth-related surfaces, such as a shared page shell/card pattern, while still keeping the current route and behavior. The login page uses that shell plus explicit input/button styling, creating a cleaner base for future `/login` and `/register` screens.
+**Core idea**  
+Introduce a clearer app structure with separate route segments for public and authenticated pages, e.g. login at `/` and authenticated page(s) under `/home`, with shared authenticated layout behavior for navbar/logout. The new users screen lives under that authenticated section and all future protected pages can reuse the same structure.
 
 **Pros**
 
-- Produces a more coherent and elegant UI than purely local tweaks
-- Reusable if auth pages expand later
-- Still relatively low complexity
-- Separates visual structure from auth behavior
+- Better long-term structure for future authenticated pages.
+- Navbar/logout can live in a shared authenticated layout.
+- Easier to extend if more private pages are added later.
 
 **Cons**
 
-- Slightly more code movement than a direct restyle
-- May be more structure than strictly necessary for one page
-- Could be premature if no other auth screens will be added soon
+- More files and structural change than this task strictly needs.
+- Slightly more design work around layouts and route boundaries.
+- Adds architectural ceremony before it is clearly needed.
 
 ---
 
-### Approach C — **Theme Foundation**
+### Approach 3: **Single Route Swap**
 
-**Core idea:**  
-Fix the issue at the design-token level by improving global color variables in `apps/frontend/src/app/globals.css` and then lightly updating the page so form controls inherit a better dark/light palette. This treats the login issue as a symptom of incomplete theming rather than a page-only bug.
+**Core idea**  
+Keep everything under `/` and switch the rendered view after login from the form to a “home-like” authenticated dashboard containing navbar, logout, and users table. Optionally add `/home` later or alias it, but the experience is mainly a conditional render in one page.
 
 **Pros**
 
-- Addresses root cause of contrast problems across the app, not just on one screen
-- Creates a stronger light/dark foundation
-- Helps future pages avoid the same unreadable input problem
+- Fewest moving parts.
+- Reuses almost all current code in `apps/frontend/src/app/page.tsx:6`.
+- Fastest to implement.
 
 **Cons**
 
-- Higher blast radius because global styles affect the entire frontend
-- More likely to create unintended visual regressions elsewhere
-- Less targeted than the user’s requested login improvement
+- Does not match the requirement cleanly for “una nueva page llamada home”.
+- Keeps public and authenticated concerns coupled in one component.
+- Harder to scale and reason about than real route separation.
 
 ---
 
 ## 3. Recommended approach
 
-**Recommended: Auth Shell**
+**Recommended: Client Split**
 
-This is the best tradeoff. A pure Tailwind Refresh would solve the bug quickly, but it risks leaving the page visually ad hoc. A full Theme Foundation is attractive long-term, but it changes global behavior and is broader than the request. The Auth Shell approach keeps the current login flow exactly as-is, fixes the unreadable input contrast explicitly, and gives the screen a more elegant, intentional layout without over-engineering or introducing a new library. It is slightly more work than a direct restyle, but still contained and appropriate for the current architecture.
+This is the best fit because it satisfies the requirement literally—login stays on `/` and redirects to a new `/home` page—while staying aligned with the repo’s existing client-side auth model in `apps/frontend/src/lib/auth.ts:5` and `apps/frontend/src/lib/api.ts:8`. The tradeoff is that route protection remains client-enforced rather than server-enforced, and token storage remains in `localStorage`; those are not ideal for a production-grade auth redesign, but changing them would expand scope well beyond this task. Compared with a fuller route-group/layout refactor, this approach delivers the requested behavior with less churn and lower risk.
 
 ---
 
@@ -101,70 +121,109 @@ This is the best tradeoff. A pure Tailwind Refresh would solve the bug quickly, 
 
 ### What this feature/fix does
 
-This change improves the existing login screen’s visual presentation and fixes the input readability issue so users can clearly see entered text in both light and dark environments. The login experience remains the same functionally: users can sign in, see loading and error states, restore sessions, and log out exactly as before. The change is limited to the presentation and usability of the existing auth screen, with emphasis on clarity, elegance, contrast, spacing, and focus visibility.
+After a user logs in successfully from the current login page, the frontend navigates them to a new `/home` page instead of rendering the logged-in state inside the login screen. The `/home` page is an authenticated experience: it verifies that a valid token exists, shows a navbar with a functional logout control, and displays a table of users loaded from the backend users API. If the backend does not already expose a “get all users” endpoint, one is added so the frontend can retrieve the user list without exposing sensitive fields.
 
 ### Exact acceptance criteria
 
-1. **Typed text is always visible in the email and password inputs.**
-   - On the login screen, when the user types into either field, the entered value must have sufficient contrast against the input background in both default and dark-preference environments.
+1. **Successful login redirects to `/home`.**  
+   Given a valid email/password on the login form at `/`, when the login request succeeds, the browser navigates to `/home`.
 
-2. **Input placeholders/labels remain readable and distinct from entered text.**
-   - Labels must be visible before interaction.
-   - If placeholders are used, placeholder text must be visually distinguishable from typed text.
+2. **Failed login does not redirect.**  
+   Given invalid credentials, when the login request fails, the user remains on `/` and sees the backend-provided error message or current fallback error.
 
-3. **The login screen has a polished card-like layout.**
-   - The auth form must appear inside a clearly defined container/surface with intentional spacing, padding, and hierarchy.
-   - The page must look visually centered and composed on common desktop and mobile viewport sizes.
+3. **`/home` requires a valid session token.**  
+   Given no token, or an invalid/expired token, when the user visits `/home`, they are returned to `/` and no protected user table is shown.
 
-4. **Interactive states are visually clear.**
-   - Inputs must show a visible focus state.
-   - The submit button must have clear default, hover/focus, and disabled/loading states.
+4. **`/home` shows a navbar with logout control.**  
+   When an authenticated user opens `/home`, a top navigation bar is visible and includes a logout icon/button.
 
-5. **Existing login behavior remains unchanged.**
-   - Successful login still shows the authenticated state currently rendered by the app.
-   - Invalid credentials still show the backend error message.
-   - Session restoration after reload still works.
-   - Logout still clears the session and returns the user to the unauthenticated view.
+5. **Logout is functional.**  
+   When the logout control is activated from `/home`, the stored auth token is removed and the user is navigated back to `/`.
 
-6. **Accessibility semantics remain testable with current patterns.**
-   - The email and password fields must still be associated with accessible labels.
-   - The primary action must still be discoverable as a button with “Log in” text or equivalent stable accessible name.
+6. **`/home` loads users from the backend API.**  
+   When an authenticated user opens `/home`, the frontend performs a users API request and renders the returned users in a table.
 
-7. **The loading state remains user-visible.**
-   - While checking session state, the screen must present a readable loading state.
-   - While submitting login, the button must visibly indicate progress and prevent duplicate submission.
+7. **The users table displays non-sensitive user fields only.**  
+   Each row in the table contains safe user identity fields available from the API, such as `firstName`, `lastName`, and `email`; it must not expose `passwordHash` or other credential material.
 
-8. **No new authentication routes or flows are introduced.**
-   - The login interaction remains on the current page unless separately requested.
+8. **A backend “get all users” endpoint exists if missing.**  
+   The backend exposes a route that returns all users needed by the table, and that route is callable by the frontend.
+
+9. **The users endpoint is protected by authentication.**  
+   Requests to the users list endpoint without a valid bearer token are rejected with unauthorized status.
+
+10. **Users API response shape is consistent.**  
+    Each returned user object includes at least `id`, `firstName`, `lastName`, and `email`, matching the existing safe user response pattern.
+
+11. **Current login functionality remains intact.**  
+    The login form still submits to the existing backend auth login endpoint and still persists the returned access token before navigation.
+
+12. **Existing auth profile endpoint behavior is not broken.**  
+    `/auth/me` continues to work for authenticated requests as it does now.
 
 ### Out-of-scope
 
-- Creating separate `/login`, `/register`, or `/dashboard` routes
-- Changing backend auth APIs or token storage behavior
-- Introducing a component library or third-party design system
-- Reworking the authenticated state beyond light visual alignment with the unauthenticated page
-- Adding registration UX
-- Adding animations beyond small presentational polish
-- Changing Playwright test intent or auth business logic
-- Implementing a full app-wide theming/token refactor
+- Role-based authorization or admin-only access to the users list.
+- Replacing `localStorage` auth with cookies or server sessions.
+- Full SSR/auth middleware redesign in Next.js.
+- Registration UI changes.
+- User creation, edit, delete, search, filtering, sorting, or pagination in the users table.
+- Backend response reshaping beyond what is necessary to safely expose the users list.
+- Adding a third-party design system or icon library unless strictly necessary.
+- Broader navigation architecture beyond the requested navbar/logout/home flow.
 
 ### Key types / interfaces / API contracts that must exist
 
-These existing contracts must remain valid:
+#### Frontend contracts
 
-- `LoginInput` in `apps/frontend/src/types/auth.ts:0-3`
-- `AuthUser` in `apps/frontend/src/types/auth.ts:5-12`
-- `AuthResponse` in `apps/frontend/src/types/auth.ts:14-17`
-- `login(input)` in `apps/frontend/src/lib/auth.ts:21-26`
-- `getMe(token)` in `apps/frontend/src/lib/auth.ts:28-33`
-- `apiFetch<T>()` in `apps/frontend/src/lib/api.ts:8-34`
+- **`LoginInput`**  
+  Existing contract in `apps/frontend/src/types/auth.ts:0`:
+  - `email: string`
+  - `password: string`
 
-UI contract expectations that must continue to hold:
+- **`AuthUser`**  
+  Existing safe user shape in `apps/frontend/src/types/auth.ts:5`:
+  - `id: string`
+  - `firstName: string`
+  - `lastName: string`
+  - `email: string`
+  - optional timestamps
 
-- A labeled email input exists
-- A labeled password input exists
-- A primary login submit action exists
-- An inline error area can display login failures
-- An authenticated state can display logged-in user identity and a logout action
+- **`AuthResponse`**  
+  Existing login response in `apps/frontend/src/types/auth.ts:14`:
+  - `accessToken: string`
+  - `user: AuthUser`
 
-If you want, next I can turn this spec into a concrete implementation plan, but I’ll stop here per your hard gate.
+- **Users list response contract**  
+  Required for the new home table:
+  - `AuthUser[]` or an equivalent dedicated `UserListItem[]`
+  - Must exclude `passwordHash`
+
+#### Backend contracts
+
+- **`POST /auth/login`**  
+  Existing:
+  - Request body: `{ email: string, password: string }`
+  - Success response: `{ accessToken: string, user: UserResponse }`
+
+- **`GET /auth/me`**  
+  Existing authenticated route:
+  - Request header: `Authorization: Bearer <token>`
+  - Success response: `UserResponse | null`
+
+- **`GET /users`**  
+  Required if missing:
+  - Request header: `Authorization: Bearer <token>`
+  - Success response: `UserResponse[]`
+  - Unauthorized response: `401`
+
+- **`UserResponse`**  
+  Existing backend-safe projection in `apps/backend/src/users/schemas/user.schema.ts:5`:
+  - `id: string`
+  - `firstName: string`
+  - `lastName: string`
+  - `email: string`
+  - optional `createdAt`, `updatedAt`
+  - Must not include `passwordHash`
+
+If you want, next I can turn this spec into an implementation plan before coding.
