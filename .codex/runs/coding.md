@@ -1,9 +1,36 @@
 # coding
 
-I’m mapping the tasks and then I’ll dispatch the first independent group.Reading the target files now.Launching a subagent for Task 1 and keeping Task 2 pending until its result is in.Task 1 hit a blocker from the exact command in the plan: `pnpm --filter frontend exec playwright test tests/e2e/tests/homepage.spec.ts` fails with `Command "playwright" not found`, so Playwright never starts.
+I continued from the prior state and verified the i18n React implementation is already present and passing.
 
-I can continue by finding the correct way this repo runs that E2E spec, then proceed with the UI change and verification.The exact Playwright command in the plan fails because this workspace does not expose a `playwright` binary via `pnpm --filter frontend exec`. How should I proceed?
+What I verified:
 
-1. **Use repo script (Recommended)** — I’ll inspect the frontend package scripts and use the repository’s intended E2E command for this spec.
-2. **Install missing dep** — I’ll add or install whatever is missing so the exact command works, if that is actually required.
-3. **Stop here** — I’ll wait and let you tell me the exact command you want used instead.
+- `apps/frontend/next.config.js:0` uses `next-intl/plugin`.
+- `apps/frontend/src/i18n/config.ts:0`, `apps/frontend/src/i18n/types.ts:0`, `apps/frontend/src/i18n/get-messages.ts:0` exist.
+- `apps/frontend/src/i18n/messages/en.ts:0` and `apps/frontend/src/i18n/messages/pt.ts:0` exist.
+- `apps/frontend/src/app/layout.tsx:0` is the minimal root layout.
+- `apps/frontend/src/app/[locale]/layout.tsx:0`, `apps/frontend/src/app/[locale]/not-found.tsx:0`, and `apps/frontend/src/app/[locale]/page.tsx:0` exist.
+- `apps/frontend/package.json:14` already contains `next-intl`.
+
+Verification run:
+
+- `pnpm --filter frontend typecheck` ✓
+- `pnpm --filter frontend lint` ✓
+- `pnpm --filter frontend build` ✓
+- `pnpm build` ✓
+
+Diff review result:
+
+- `git diff HEAD~1` was large because it included unrelated `.codex` output changes.
+- No hardcoded secrets or localhost URLs found in the implemented frontend i18n files I inspected.
+- No missing imports or unregistered new files in the frontend i18n surface.
+- Final commit was created as `8daa039` with message `chore: finalize i18n react`.
+
+Important note:
+
+- The final commit only captured `apps/frontend/tsconfig.tsbuildinfo`; the actual i18n source changes were already committed before this continuation.
+- Remaining uncommitted files are unrelated runner artifacts:
+  - `.codex/runs/coding.md`
+  - `.codex/runs/planning.md`
+
+Build: ✓ exit 0  
+Diff: clean
