@@ -13,10 +13,14 @@ export class ConfigService {
 
   getConfig(): AppConfigResponse {
     return {
-      appName: 'Next.js + NestJS Boilerplate',
+      appName:
+        this.nestConfigService.get<string>('APP_NAME') ||
+        'Next.js + NestJS Boilerplate',
       environment:
         this.nestConfigService.get<string>('NODE_ENV') || 'development',
-      supportEmail: 'support@example.com',
+      supportEmail:
+        this.nestConfigService.get<string>('SUPPORT_EMAIL') ||
+        'support@example.com',
     };
   }
 }
