@@ -9,6 +9,9 @@ type SessionState = {
   config: NavbarConfig;
 };
 
+const loginInputClassName =
+  'h-12 rounded-2xl border border-white/10 bg-[#1f2937] px-4 text-white outline-none transition focus:border-[#3b82f6] focus:ring-2 focus:ring-[#3b82f6]/30';
+
 export default function Home() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -129,7 +132,7 @@ export default function Home() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="h-12 rounded-2xl border border-white/10 bg-[#1f2937] px-4 text-white outline-none transition focus:border-[#3b82f6] focus:ring-2 focus:ring-[#3b82f6]/30"
+              className={loginInputClassName}
               autoComplete="email"
               required
             />
@@ -141,7 +144,7 @@ export default function Home() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="h-12 rounded-2xl border border-white/10 bg-[#1f2937] px-4 text-white outline-none transition focus:border-[#3b82f6] focus:ring-2 focus:ring-[#3b82f6]/30"
+              className={loginInputClassName}
               autoComplete="current-password"
               required
             />
