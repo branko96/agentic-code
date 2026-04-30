@@ -3,25 +3,55 @@
 @tailwind utilities;
 
 :root {
-  --background: #07111f;
-  --foreground: #f8fafc;
-  --surface: #0f172a;
-  --surface-foreground: #e2e8f0;
-  --surface-border: rgba(148, 163, 184, 0.2);
-  --primary: #22d3ee;
-  --primary-foreground: #082f49;
-  --muted: #94a3b8;
-  --danger: #f87171;
+  --background: #f4f7fb;
+  --foreground: #0f172a;
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-foreground: #334155;
+  --surface-border: rgba(148, 163, 184, 0.22);
+  --primary: #2563eb;
+  --primary-foreground: #eff6ff;
+  --muted: #64748b;
+  --danger: #dc2626;
+  --accent: #7c3aed;
+  --accent-soft: rgba(124, 58, 237, 0.12);
+  --hero-start: #eef4ff;
+  --hero-end: #f8fbff;
 }
 
 body {
   color: var(--foreground);
   background:
-    radial-gradient(circle at top, rgba(34, 211, 238, 0.16), transparent 38%),
-    linear-gradient(180deg, #020617 0%, #111827 100%);
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(124, 58, 237, 0.14), transparent 28%),
+    linear-gradient(180deg, var(--hero-start) 0%, var(--hero-end) 52%, #ffffff 100%);
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
 }
+
+@layer components {
+  .auth-shell {
+    @apply relative overflow-hidden;
+  }
+
+  .auth-shell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(37, 99, 235, 0.12), transparent 22%),
+      radial-gradient(circle at 85% 18%, rgba(124, 58, 237, 0.1), transparent 20%);
+    pointer-events: none;
+  }
+
+  .auth-card {
+    @apply rounded-[32px] border border-surface-border bg-white/75 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl;
+  }
+
+  .auth-pill {
+    @apply inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium tracking-[0.18em] text-slate-500 uppercase;
+  }
+}
+
 
 @layer utilities {
   .text-balance {
