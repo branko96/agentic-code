@@ -1,5 +1,13 @@
 import { apiFetch } from './api';
-import type { AuthResponse, AuthUser, LoginInput, NavbarConfig } from '../types/auth';
+import type {
+  AuthResponse,
+  AuthUser,
+  CreateUserInput,
+  LoginInput,
+  NavbarConfig,
+  UpdateUserInput,
+  User,
+} from '../types/auth';
 
 const AUTH_TOKEN_STORAGE_KEY = 'accessToken';
 
@@ -36,6 +44,36 @@ export function getMe(token: string) {
 export function getConfig(token: string) {
   return apiFetch<NavbarConfig>('/config', {
     method: 'GET',
+    token,
+  });
+}
+
+export function getUsers(token: string) {
+  return apiFetch<User[]>('/users', {
+    method: 'GET',
+    token,
+  });
+}
+
+export function createUser(token: string, input: CreateUserInput) {
+  return apiFetch<User>('/users', {
+    method: 'POST',
+    token,
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateUser(token: string, id: string, input: UpdateUserInput) {
+  return apiFetch<User>(`/users/${id}`, {
+    method: 'PATCH',
+    token,
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteUser(token: string, id: string) {
+  return apiFetch<User>(`/users/${id}`, {
+    method: 'DELETE',
     token,
   });
 }

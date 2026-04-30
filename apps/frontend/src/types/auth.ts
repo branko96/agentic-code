@@ -3,7 +3,7 @@ export type LoginInput = {
   password: string;
 };
 
-export type AuthUser = {
+export type User = {
   id: string;
   firstName: string;
   lastName: string;
@@ -11,6 +11,8 @@ export type AuthUser = {
   createdAt?: string | Date;
   updatedAt?: string | Date;
 };
+
+export type AuthUser = User;
 
 export type AuthResponse = {
   accessToken: string;
@@ -25,4 +27,18 @@ export type NavbarConfig = {
   appName: string;
   environment: string;
   supportEmail: string;
+};
+
+export type CreateUserInput = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+};
+
+export type UpdateUserInput = {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  password?: string;
 };
