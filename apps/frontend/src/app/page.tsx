@@ -4,13 +4,13 @@ import { FormEvent, useEffect, useState } from 'react';
 import { clearToken, getConfig, getMe, login, persistToken, readToken } from '../lib/auth';
 import type { AuthUser, NavbarConfig } from '../types/auth';
 
-const primaryButtonClassName =
-  'inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 font-medium text-primary-foreground transition hover:opacity-90';
-
 type SessionState = {
   user: AuthUser;
   config: NavbarConfig;
 };
+
+const loginInputClassName =
+  'h-12 rounded-2xl border border-white/10 bg-[#1f2937] px-4 text-white outline-none transition focus:border-[#3b82f6] focus:ring-2 focus:ring-[#3b82f6]/30';
 
 export default function Home() {
   const [email, setEmail] = useState('');
@@ -50,9 +50,12 @@ export default function Home() {
       const response = await login({ email, password });
       persistToken(response.accessToken);
 
-      const config = await getConfig(response.accessToken);
+      const [user, config] = await Promise.all([
+        getMe(response.accessToken),
+        getConfig(response.accessToken),
+      ]);
 
-      setSession({ user: response.user, config });
+      setSession({ user, config });
       setPassword('');
     } catch (caughtError) {
       setSession(null);
@@ -96,7 +99,11 @@ export default function Home() {
               <p className="text-sm text-muted">{session.user.email}</p>
             </div>
 
-            <button type="button" onClick={handleLogout} className={primaryButtonClassName}>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 font-medium text-primary-foreground transition hover:opacity-90"
+            >
               Log out
             </button>
           </div>
@@ -107,39 +114,44 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-12 text-foreground">
-      <section className="w-full max-w-md rounded-3xl border border-surface-border bg-white/10 p-8 shadow-2xl shadow-cyan-950/30 backdrop-blur">
-        <h1 className="text-3xl font-semibold tracking-tight text-white">Log in</h1>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          Sign in with your existing backend account.
-        </p>
+      <section className="w-full max-w-md rounded-[32px] border border-white/10 bg-[#111827] px-8 py-10 shadow-2xl shadow-black/30">
+        <div className="flex flex-col items-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white">
+            <div className="text-3xl leading-none text-[#111827]">✦</div>
+          </div>
+          <h1 className="mt-6 text-center text-3xl font-bold tracking-tight text-white">
+            Welcome back
+          </h1>
+          <p className="mt-2 text-center text-sm text-[#9ca3af]">Login to your account</p>
+        </div>
 
-        <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-100">
+        <form className="mt-8 flex flex-col gap-4" onSubmit={handleSubmit}>
+          <label className="flex flex-col gap-2 text-sm font-medium text-[#e5e7eb]">
             Email
             <input
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="rounded-xl border border-white/15 bg-slate-50 px-3 py-2.5 text-slate-950 placeholder:text-slate-500 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/40"
+              className={loginInputClassName}
               autoComplete="email"
               required
             />
           </label>
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-100">
+          <label className="flex flex-col gap-2 text-sm font-medium text-[#e5e7eb]">
             Password
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="rounded-xl border border-white/15 bg-slate-50 px-3 py-2.5 text-slate-950 placeholder:text-slate-500 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/40"
+              className={loginInputClassName}
               autoComplete="current-password"
               required
             />
           </label>
 
           {error ? (
-            <p className="rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-red-100">
+            <p className="rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-red-100">
               {error}
             </p>
           ) : null}
@@ -147,9 +159,9 @@ export default function Home() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`${primaryButtonClassName} disabled:cursor-not-allowed disabled:opacity-50`}
+            className="mt-2 inline-flex h-12 items-center justify-center rounded-2xl bg-[#2563eb] px-4 font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSubmitting ? 'Logging in...' : 'Log in'}
+            {isSubmitting ? 'Logging in...' : 'Login'}
           </button>
         </form>
       </section>
