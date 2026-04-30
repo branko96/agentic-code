@@ -142,7 +142,7 @@ export default function Home() {
             />
           </label>
 
-          <div className="flex items-center justify-between gap-4 text-sm">
+          <div className="flex items-center gap-4 text-sm">
             <label className="flex items-center gap-2 text-slate-600">
               <input
                 type="checkbox"
@@ -150,10 +150,6 @@ export default function Home() {
               />
               <span>Remember me</span>
             </label>
-
-            <a href="#" className="font-medium text-blue-600 hover:text-blue-700">
-              Forgot password?
-            </a>
           </div>
 
           {error ? (
