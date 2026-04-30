@@ -18,6 +18,10 @@ const loginHighlights = [
   'Access support channels without leaving the app',
 ];
 
+const statCardClassName = 'rounded-2xl bg-white/10 p-4';
+const formInputClassName =
+  'rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-blue-100';
+
 export default function Home() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,12 +60,14 @@ export default function Home() {
       const response = await login({ email, password });
       persistToken(response.accessToken);
 
-      const config = await getConfig(response.accessToken);
+      const [user, config] = await Promise.all([
+        getMe(response.accessToken),
+        getConfig(response.accessToken),
+      ]);
 
-      setSession({ user: response.user, config });
+      setSession({ user, config });
       setPassword('');
     } catch (caughtError) {
-      setSession(null);
       clearToken();
       setError(caughtError instanceof Error ? caughtError.message : 'Unable to log in');
     } finally {
@@ -148,15 +154,15 @@ export default function Home() {
               Fast access for your existing backend account
             </p>
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-2xl bg-white/10 p-4">
+              <div className={statCardClassName}>
                 <p className="text-2xl font-semibold">24/7</p>
                 <p className="mt-1 text-xs text-slate-300">Availability</p>
               </div>
-              <div className="rounded-2xl bg-white/10 p-4">
+              <div className={statCardClassName}>
                 <p className="text-2xl font-semibold">1</p>
                 <p className="mt-1 text-xs text-slate-300">Secure access point</p>
               </div>
-              <div className="rounded-2xl bg-white/10 p-4">
+              <div className={statCardClassName}>
                 <p className="text-2xl font-semibold">100%</p>
                 <p className="mt-1 text-xs text-slate-300">Focused workflow</p>
               </div>
@@ -181,7 +187,7 @@ export default function Home() {
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-blue-100"
+                  className={formInputClassName}
                   autoComplete="email"
                   placeholder="you@example.com"
                   required
@@ -194,7 +200,7 @@ export default function Home() {
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-blue-100"
+                  className={formInputClassName}
                   autoComplete="current-password"
                   placeholder="Enter your password"
                   required
