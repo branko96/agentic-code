@@ -1,21 +1,16 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { clearToken, getConfig, getMe, login, persistToken, readToken } from '../lib/auth';
-import type { AuthUser, NavbarConfig } from '../types/auth';
+import { useRouter } from 'next/navigation';
+import { login, persistToken, readToken } from '../lib/auth';
 
 const primaryButtonClassName =
   'inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 font-medium text-primary-foreground transition hover:opacity-90';
 
-type SessionState = {
-  user: AuthUser;
-  config: NavbarConfig;
-};
-
 export default function Home() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [session, setSession] = useState<SessionState | null>(null);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
@@ -23,23 +18,13 @@ export default function Home() {
   useEffect(() => {
     const token = readToken();
 
-    if (!token) {
-      setIsCheckingSession(false);
+    if (token) {
+      router.replace('/dashboard');
       return;
     }
 
-    Promise.all([getMe(token), getConfig(token)])
-      .then(([user, config]) => {
-        setSession({ user, config });
-      })
-      .catch(() => {
-        clearToken();
-        setSession(null);
-      })
-      .finally(() => {
-        setIsCheckingSession(false);
-      });
-  }, []);
+    setIsCheckingSession(false);
+  }, [router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -49,58 +34,19 @@ export default function Home() {
     try {
       const response = await login({ email, password });
       persistToken(response.accessToken);
-
-      const config = await getConfig(response.accessToken);
-
-      setSession({ user: response.user, config });
       setPassword('');
+      router.replace('/dashboard');
     } catch (caughtError) {
-      setSession(null);
-      clearToken();
       setError(caughtError instanceof Error ? caughtError.message : 'Unable to log in');
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  function handleLogout() {
-    clearToken();
-    setSession(null);
-    setPassword('');
-  }
-
   if (isCheckingSession) {
     return (
       <main className="flex min-h-screen items-center justify-center px-6 py-12">
         <p className="text-sm text-muted">Checking session...</p>
-      </main>
-    );
-  }
-
-  if (session) {
-    return (
-      <main className="min-h-screen px-6 py-6 text-foreground">
-        <nav className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-2xl border border-surface-border bg-surface/90 px-5 py-4 shadow-2xl shadow-cyan-950/20 backdrop-blur">
-          <div>
-            <p className="text-lg font-semibold text-white">{session.config.appName}</p>
-            <p className="text-sm text-muted">
-              {session.config.environment} · {session.config.supportEmail}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm font-medium text-surface-foreground">
-                {session.user.firstName} {session.user.lastName}
-              </p>
-              <p className="text-sm text-muted">{session.user.email}</p>
-            </div>
-
-            <button type="button" onClick={handleLogout} className={primaryButtonClassName}>
-              Log out
-            </button>
-          </div>
-        </nav>
       </main>
     );
   }
