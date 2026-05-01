@@ -6,20 +6,26 @@ import type { AuthUser, NavbarConfig } from '../types/auth';
 
 const primaryButtonClassName =
   'inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all duration-200 hover:scale-[1.02] hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50';
-
-type SessionState = {
-  user: AuthUser;
-  config: NavbarConfig;
-};
+const inputClassName =
+  'w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10';
 
 export default function Home() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [session, setSession] = useState<SessionState | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [config, setConfig] = useState<NavbarConfig | null>(null);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [rememberSession, setRememberSession] = useState(false);
+
+  async function loadSession(token: string, nextUser?: AuthUser) {
+    const resolvedUser = nextUser ?? (await getMe(token));
+    const resolvedConfig = await getConfig(token);
+
+    setUser(resolvedUser);
+    setConfig(resolvedConfig);
+  }
 
   useEffect(() => {
     const token = readToken();
@@ -29,13 +35,11 @@ export default function Home() {
       return;
     }
 
-    Promise.all([getMe(token), getConfig(token)])
-      .then(([user, config]) => {
-        setSession({ user, config });
-      })
+    loadSession(token)
       .catch(() => {
         clearToken();
-        setSession(null);
+        setUser(null);
+        setConfig(null);
       })
       .finally(() => {
         setIsCheckingSession(false);
@@ -50,13 +54,11 @@ export default function Home() {
     try {
       const response = await login({ email, password });
       persistToken(response.accessToken);
-
-      const config = await getConfig(response.accessToken);
-
-      setSession({ user: response.user, config });
+      await loadSession(response.accessToken, response.user);
       setPassword('');
     } catch (caughtError) {
-      setSession(null);
+      setUser(null);
+      setConfig(null);
       clearToken();
       setError(caughtError instanceof Error ? caughtError.message : 'Unable to log in');
     } finally {
@@ -66,7 +68,8 @@ export default function Home() {
 
   function handleLogout() {
     clearToken();
-    setSession(null);
+    setUser(null);
+    setConfig(null);
     setPassword('');
     setRememberSession(false);
   }
@@ -79,23 +82,23 @@ export default function Home() {
     );
   }
 
-  if (session) {
+  if (user && config) {
     return (
       <main className="min-h-screen px-6 py-6 text-foreground">
         <nav className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-2xl border border-surface-border bg-surface/90 px-5 py-4 shadow-2xl shadow-cyan-950/20 backdrop-blur">
           <div>
-            <p className="text-lg font-semibold text-white">{session.config.appName}</p>
+            <p className="text-lg font-semibold text-white">{config.appName}</p>
             <p className="text-sm text-muted">
-              {session.config.environment} · {session.config.supportEmail}
+              {config.environment} · {config.supportEmail}
             </p>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm font-medium text-surface-foreground">
-                {session.user.firstName} {session.user.lastName}
+                {user.firstName} {user.lastName}
               </p>
-              <p className="text-sm text-muted">{session.user.email}</p>
+              <p className="text-sm text-muted">{user.email}</p>
             </div>
 
             <button type="button" onClick={handleLogout} className={primaryButtonClassName}>
@@ -110,20 +113,23 @@ export default function Home() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-12 text-foreground">
       <section className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900/50 p-8 shadow-2xl backdrop-blur">
-        <h1 className="text-3xl font-light tracking-tight text-white">Log in</h1>
-        <p className="mt-2 text-sm text-slate-400">Sign in with your existing backend account.</p>
+        <h1 className="text-3xl font-light tracking-tight text-white">Bienvenido de nuevo</h1>
+        <p className="mt-2 text-sm text-slate-400">
+          Introduce tus credenciales para acceder a tu cuenta
+        </p>
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-300">
-              Email
+              Correo electrónico
             </label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+              placeholder="nombre@empresa.com"
+              className={inputClassName}
               autoComplete="email"
               required
             />
@@ -131,14 +137,14 @@ export default function Home() {
 
           <div>
             <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-300">
-              Password
+              Contraseña
             </label>
             <input
               id="password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+              className={inputClassName}
               autoComplete="current-password"
               required
             />
@@ -156,11 +162,11 @@ export default function Home() {
                 onChange={(event) => setRememberSession(event.target.checked)}
                 className="h-4 w-4 rounded border border-slate-600 bg-slate-800 text-indigo-600 focus:ring-2 focus:ring-indigo-500/20"
               />
-              <span>Remember me</span>
+              <span>Mantener sesión iniciada</span>
             </label>
 
             <a href="#" className="text-sm text-slate-400 transition-colors hover:text-white">
-              Forgot password?
+              ¿Has olvidado tu contraseña?
             </a>
           </div>
 
@@ -171,8 +177,15 @@ export default function Home() {
           ) : null}
 
           <button type="submit" disabled={isSubmitting} className={primaryButtonClassName}>
-            {isSubmitting ? 'Logging in...' : 'Log in'}
+            {isSubmitting ? 'Iniciando sesión...' : 'Iniciar sesión'}
           </button>
+
+          <p className="text-center text-sm text-slate-400">
+            ¿No tienes una cuenta?{' '}
+            <a href="#" className="font-medium text-white transition-colors hover:text-indigo-300">
+              Regístrate gratis
+            </a>
+          </p>
         </form>
       </section>
     </main>
