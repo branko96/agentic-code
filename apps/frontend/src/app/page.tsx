@@ -5,7 +5,7 @@ import { clearToken, getConfig, getMe, login, persistToken, readToken } from '..
 import type { AuthUser, NavbarConfig } from '../types/auth';
 
 const primaryButtonClassName =
-  'inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 font-medium text-primary-foreground transition hover:opacity-90';
+  'inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all duration-200 hover:scale-[1.02] hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50';
 
 type SessionState = {
   user: AuthUser;
@@ -19,6 +19,7 @@ export default function Home() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [rememberSession, setRememberSession] = useState(false);
 
   useEffect(() => {
     const token = readToken();
@@ -67,6 +68,7 @@ export default function Home() {
     clearToken();
     setSession(null);
     setPassword('');
+    setRememberSession(false);
   }
 
   if (isCheckingSession) {
@@ -107,36 +109,60 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-12 text-foreground">
-      <section className="w-full max-w-md rounded-3xl border border-surface-border bg-white/10 p-8 shadow-2xl shadow-cyan-950/30 backdrop-blur">
-        <h1 className="text-3xl font-semibold tracking-tight text-white">Log in</h1>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          Sign in with your existing backend account.
-        </p>
+      <section className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900/50 p-8 shadow-2xl backdrop-blur">
+        <h1 className="text-3xl font-light tracking-tight text-white">Log in</h1>
+        <p className="mt-2 text-sm text-slate-400">Sign in with your existing backend account.</p>
 
-        <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-100">
-            Email
+        <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-300">
+              Email
+            </label>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="rounded-xl border border-white/15 bg-slate-50 px-3 py-2.5 text-slate-950 placeholder:text-slate-500 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/40"
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               autoComplete="email"
               required
             />
-          </label>
+          </div>
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-100">
-            Password
+          <div>
+            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-300">
+              Password
+            </label>
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="rounded-xl border border-white/15 bg-slate-50 px-3 py-2.5 text-slate-950 placeholder:text-slate-500 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/40"
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               autoComplete="current-password"
               required
             />
-          </label>
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <label
+              htmlFor="remember-session"
+              className="flex items-center gap-2 text-sm text-slate-400"
+            >
+              <input
+                id="remember-session"
+                type="checkbox"
+                checked={rememberSession}
+                onChange={(event) => setRememberSession(event.target.checked)}
+                className="h-4 w-4 rounded border border-slate-600 bg-slate-800 text-indigo-600 focus:ring-2 focus:ring-indigo-500/20"
+              />
+              <span>Remember me</span>
+            </label>
+
+            <a href="#" className="text-sm text-slate-400 transition-colors hover:text-white">
+              Forgot password?
+            </a>
+          </div>
 
           {error ? (
             <p className="rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-red-100">
@@ -144,11 +170,7 @@ export default function Home() {
             </p>
           ) : null}
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`${primaryButtonClassName} disabled:cursor-not-allowed disabled:opacity-50`}
-          >
+          <button type="submit" disabled={isSubmitting} className={primaryButtonClassName}>
             {isSubmitting ? 'Logging in...' : 'Log in'}
           </button>
         </form>

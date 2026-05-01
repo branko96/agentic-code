@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Next.js + NestJS Boilerplate',
-  description: 'Full-stack monorepo boilerplate with AI agents',
+  title: 'Log in',
+  description: 'Sign in with your existing backend account.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
