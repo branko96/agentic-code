@@ -6,11 +6,19 @@ import type { AuthUser, NavbarConfig } from '../types/auth';
 
 const primaryButtonClassName =
   'inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 font-medium text-primary-foreground transition hover:opacity-90';
+const formInputClassName =
+  'h-12 rounded-2xl border border-slate-200 bg-white px-4 text-slate-950 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100';
+const featureCardClassName = 'rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur';
 
 type SessionState = {
   user: AuthUser;
   config: NavbarConfig;
 };
+
+async function loadSession(token: string) {
+  const [user, config] = await Promise.all([getMe(token), getConfig(token)]);
+  return { user, config };
+}
 
 export default function Home() {
   const [email, setEmail] = useState('');
@@ -28,9 +36,9 @@ export default function Home() {
       return;
     }
 
-    Promise.all([getMe(token), getConfig(token)])
-      .then(([user, config]) => {
-        setSession({ user, config });
+    loadSession(token)
+      .then((nextSession) => {
+        setSession(nextSession);
       })
       .catch(() => {
         clearToken();
@@ -50,9 +58,9 @@ export default function Home() {
       const response = await login({ email, password });
       persistToken(response.accessToken);
 
-      const config = await getConfig(response.accessToken);
+      const nextSession = await loadSession(response.accessToken);
 
-      setSession({ user: response.user, config });
+      setSession(nextSession);
       setPassword('');
     } catch (caughtError) {
       setSession(null);
@@ -123,13 +131,13 @@ export default function Home() {
             </p>
           </div>
           <div className="relative z-10 mt-10 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+            <div className={featureCardClassName}>
               <p className="text-sm font-medium text-white">Secure access</p>
               <p className="mt-2 text-sm leading-6 text-slate-300">
                 Authenticate with your existing credentials.
               </p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+            <div className={featureCardClassName}>
               <p className="text-sm font-medium text-white">Fast setup</p>
               <p className="mt-2 text-sm leading-6 text-slate-300">
                 Use the same API configuration already wired into the app.
@@ -153,7 +161,7 @@ export default function Home() {
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-slate-950 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100"
+                  className={formInputClassName}
                   autoComplete="email"
                   required
                 />
@@ -164,7 +172,7 @@ export default function Home() {
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-slate-950 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100"
+                  className={formInputClassName}
                   autoComplete="current-password"
                   required
                 />
