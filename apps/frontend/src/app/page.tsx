@@ -151,6 +151,13 @@ export default function Home() {
           >
             {isSubmitting ? 'Logging in...' : 'Log in'}
           </button>
+
+          <p className="mt-2 text-center text-sm text-muted">
+            ¿No tienes cuenta?{' '}
+            <a href="/register" className="font-medium text-primary transition hover:opacity-80">
+              Crear cuenta
+            </a>
+          </p>
         </form>
       </section>
     </main>
