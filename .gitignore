@@ -48,3 +48,11 @@ Thumbs.db
 # Misc
 .turbo
 .cache
+.worktrees/
+
+# Agent/orchestrator scratch
+.codex/
+.claude/
+
+# TypeScript incremental build info
+**/*.tsbuildinfo
