@@ -1,5 +1,11 @@
 import { apiFetch } from './api';
-import type { AuthResponse, AuthUser, LoginInput, NavbarConfig } from '../types/auth';
+import type {
+  AuthResponse,
+  AuthUser,
+  LoginInput,
+  NavbarConfig,
+  RegisterInput,
+} from '../types/auth';
 
 const AUTH_TOKEN_STORAGE_KEY = 'accessToken';
 
@@ -17,6 +23,13 @@ export function persistToken(token: string) {
 
 export function clearToken() {
   window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+}
+
+export function register(input: RegisterInput) {
+  return apiFetch<AuthResponse>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
 }
 
 export function login(input: LoginInput) {
