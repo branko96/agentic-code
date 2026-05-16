@@ -1,6 +1,8 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { IconLogin2 } from '@tabler/icons-react';
 import { clearToken, getConfig, getMe, login, persistToken, readToken } from '../lib/auth';
 import type { AuthUser, NavbarConfig } from '../types/auth';
 
@@ -71,8 +73,11 @@ export default function Home() {
 
   if (isCheckingSession) {
     return (
-      <main className="flex min-h-screen items-center justify-center px-6 py-12">
-        <p className="text-sm text-muted">Checking session...</p>
+      <main
+        className="flex min-h-screen items-center justify-center px-4 py-12"
+        style={{ backgroundColor: '#f5f5f0' }}
+      >
+        <p style={{ color: '#6b7280' }}>Checking session...</p>
       </main>
     );
   }
@@ -106,60 +111,130 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-12 text-foreground">
-      <section className="w-full max-w-md rounded-3xl border border-surface-border bg-white/10 p-8 shadow-2xl shadow-cyan-950/30 backdrop-blur">
-        <h1 className="text-3xl font-semibold tracking-tight text-white">Log in</h1>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          Sign in with your existing backend account.
+    <main
+      className="flex min-h-screen items-center justify-center px-4 py-12"
+      style={{ backgroundColor: '#f5f5f0' }}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl border bg-white px-8 pb-8 pt-10 shadow-sm"
+        style={{ borderColor: '#e5e7eb', borderRadius: '16px' }}
+      >
+        {/* Icon badge */}
+        <div
+          className="mx-auto mb-6 flex h-10 w-10 items-center justify-center rounded-lg"
+          style={{ backgroundColor: '#7f77dd', borderRadius: '8px' }}
+        >
+          <IconLogin2 size={20} color="white" />
+        </div>
+
+        <h1
+          className="text-center text-[22px] font-medium tracking-tight"
+          style={{ color: '#111827' }}
+        >
+          Iniciar sesión
+        </h1>
+        <p className="mt-1.5 text-center text-sm" style={{ color: '#6b7280' }}>
+          Ingresa con tu cuenta existente
         </p>
 
-        <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-100">
-            Email
+        <form className="mt-7 flex flex-col gap-4" onSubmit={handleSubmit}>
+          {/* Email */}
+          <div>
+            <p
+              className="mb-1.5 text-xs font-medium uppercase tracking-wide"
+              style={{ color: '#6b7280', letterSpacing: '0.02em' }}
+            >
+              Correo electrónico
+            </p>
             <input
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="rounded-xl border border-white/15 bg-slate-50 px-3 py-2.5 text-slate-950 placeholder:text-slate-500 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/40"
+              placeholder="correo@ejemplo.com"
+              className="w-full rounded-lg border bg-white px-3 text-sm outline-none transition"
+              style={{
+                height: '38px',
+                borderColor: '#e5e7eb',
+                color: '#111827',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#7f77dd';
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(127,119,221,0.2)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = '#e5e7eb';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
               autoComplete="email"
               required
             />
-          </label>
+          </div>
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-100">
-            Password
+          {/* Password */}
+          <div>
+            <p
+              className="mb-1.5 text-xs font-medium uppercase tracking-wide"
+              style={{ color: '#6b7280', letterSpacing: '0.02em' }}
+            >
+              Contraseña
+            </p>
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="rounded-xl border border-white/15 bg-slate-50 px-3 py-2.5 text-slate-950 placeholder:text-slate-500 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/40"
+              placeholder="••••••••"
+              className="w-full rounded-lg border bg-white px-3 text-sm outline-none transition"
+              style={{
+                height: '38px',
+                borderColor: '#e5e7eb',
+                color: '#111827',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#7f77dd';
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(127,119,221,0.2)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = '#e5e7eb';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
               autoComplete="current-password"
               required
             />
-          </label>
+          </div>
 
+          {/* Error message */}
           {error ? (
-            <p className="rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-red-100">
+            <p
+              className="rounded-lg border px-3 py-2 text-sm"
+              style={{
+                borderColor: 'rgba(239,68,68,0.3)',
+                backgroundColor: 'rgba(239,68,68,0.1)',
+                color: '#dc2626',
+              }}
+            >
               {error}
             </p>
           ) : null}
 
+          {/* Submit */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`${primaryButtonClassName} disabled:cursor-not-allowed disabled:opacity-50`}
+            className="w-full rounded-lg px-4 py-3 text-[15px] font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ backgroundColor: '#7f77dd' }}
           >
-            {isSubmitting ? 'Logging in...' : 'Log in'}
+            {isSubmitting ? 'Ingresando...' : 'Iniciar sesión'}
           </button>
-
-          <p className="mt-2 text-center text-sm text-muted">
-            ¿No tienes cuenta?{' '}
-            <a href="/register" className="font-medium text-primary transition hover:opacity-80">
-              Crear cuenta
-            </a>
-          </p>
         </form>
-      </section>
+
+        {/* Bottom link */}
+        <p className="mt-6 text-center text-sm" style={{ color: '#6b7280' }}>
+          ¿No tienes cuenta?{' '}
+          <Link href="/register" className="font-medium" style={{ color: '#7f77dd' }}>
+            Crear cuenta
+          </Link>
+        </p>
+      </div>
     </main>
   );
 }
