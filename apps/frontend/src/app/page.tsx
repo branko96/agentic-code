@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { IconLogin2 } from '@tabler/icons-react';
+import { IconStar } from '@tabler/icons-react';
 import { clearToken, getConfig, getMe, login, persistToken, readToken } from '../lib/auth';
 import type { AuthUser, NavbarConfig } from '../types/auth';
 
@@ -124,7 +124,7 @@ export default function Home() {
           className="mx-auto mb-6 flex h-10 w-10 items-center justify-center rounded-lg"
           style={{ backgroundColor: '#7f77dd', borderRadius: '8px' }}
         >
-          <IconLogin2 size={20} color="white" />
+          <IconStar size={20} color="white" />
         </div>
 
         <h1
