@@ -32,6 +32,7 @@ export default function RegisterPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
@@ -44,12 +45,6 @@ export default function RegisterPage() {
     event.preventDefault();
     setError('');
     setIsSubmitting(true);
-
-    if (!agreeTerms) {
-      setError('Debes aceptar los Términos y Condiciones');
-      setIsSubmitting(false);
-      return;
-    }
 
     if (!firstName.trim() || !lastName.trim()) {
       setError('El nombre completo es obligatorio');
@@ -262,6 +257,53 @@ export default function RegisterPage() {
             )}
           </div>
 
+          {/* Confirm password */}
+          <div>
+            <p
+              className="mb-1.5 text-xs font-medium uppercase tracking-wide"
+              style={{ color: '#6b7280', letterSpacing: '0.02em' }}
+            >
+              Confirmar contraseña
+            </p>
+            <div className="relative">
+              <IconLock
+                size={16}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: '#9ca3af' }}
+              />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full rounded-lg border bg-white pl-9 pr-9 text-sm outline-none transition"
+                style={{
+                  height: '38px',
+                  borderColor:
+                    confirmPassword && password !== confirmPassword ? '#ef4444' : '#e5e7eb',
+                  color: '#111827',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#7f77dd';
+                  e.currentTarget.style.boxShadow = '0 0 0 2px rgba(127,119,221,0.2)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor =
+                    confirmPassword && password !== confirmPassword ? '#ef4444' : '#e5e7eb';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+                autoComplete="new-password"
+                required
+              />
+            </div>
+
+            {confirmPassword && password !== confirmPassword && (
+              <p className="mt-1 text-xs" style={{ color: '#ef4444' }}>
+                Las contraseñas no coinciden
+              </p>
+            )}
+          </div>
+
           {/* Date of birth */}
           <div>
             <p
@@ -331,7 +373,9 @@ export default function RegisterPage() {
           {/* Submit */}
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={
+              isSubmitting || !agreeTerms || (!!confirmPassword && password !== confirmPassword)
+            }
             className="w-full rounded-lg px-4 py-3 text-[15px] font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             style={{ backgroundColor: '#7f77dd' }}
           >
