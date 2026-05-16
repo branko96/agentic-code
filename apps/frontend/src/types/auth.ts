@@ -3,6 +3,14 @@ export type LoginInput = {
   password: string;
 };
 
+export type RegisterInput = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  dateOfBirth?: string;
+};
+
 export type AuthUser = {
   id: string;
   firstName: string;

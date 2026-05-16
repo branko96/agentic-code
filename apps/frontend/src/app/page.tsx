@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { clearToken, getConfig, getMe, login, persistToken, readToken } from '../lib/auth';
 import type { AuthUser, NavbarConfig } from '../types/auth';
 
@@ -152,6 +153,16 @@ export default function Home() {
             {isSubmitting ? 'Logging in...' : 'Log in'}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-sm text-muted">
+          ¿No tienes cuenta?{' '}
+          <Link
+            href="/register"
+            className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+          >
+            Crear cuenta
+          </Link>
+        </p>
       </section>
     </main>
   );
