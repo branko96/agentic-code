@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { IconLogin2 } from '@tabler/icons-react';
+import { IconLogin2, IconMail, IconLock, IconEye, IconEyeOff } from '@tabler/icons-react';
 import { clearToken, getConfig, getMe, login, persistToken, readToken } from '../lib/auth';
 import type { AuthUser, NavbarConfig } from '../types/auth';
 
@@ -17,6 +17,7 @@ type SessionState = {
 export default function Home() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [session, setSession] = useState<SessionState | null>(null);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -146,28 +147,35 @@ export default function Home() {
             >
               Correo electrónico
             </p>
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="correo@ejemplo.com"
-              className="w-full rounded-lg border bg-white px-3 text-sm outline-none transition"
-              style={{
-                height: '38px',
-                borderColor: '#e5e7eb',
-                color: '#111827',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = '#7f77dd';
-                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(127,119,221,0.2)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = '#e5e7eb';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-              autoComplete="email"
-              required
-            />
+            <div className="relative">
+              <IconMail
+                size={16}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: '#9ca3af' }}
+              />
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="correo@ejemplo.com"
+                className="w-full rounded-lg border bg-white pl-9 pr-3 text-sm outline-none transition"
+                style={{
+                  height: '38px',
+                  borderColor: '#e5e7eb',
+                  color: '#111827',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#7f77dd';
+                  e.currentTarget.style.boxShadow = '0 0 0 2px rgba(127,119,221,0.2)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = '#e5e7eb';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+                autoComplete="email"
+                required
+              />
+            </div>
           </div>
 
           {/* Password */}
@@ -178,28 +186,44 @@ export default function Home() {
             >
               Contraseña
             </p>
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
-              className="w-full rounded-lg border bg-white px-3 text-sm outline-none transition"
-              style={{
-                height: '38px',
-                borderColor: '#e5e7eb',
-                color: '#111827',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = '#7f77dd';
-                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(127,119,221,0.2)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = '#e5e7eb';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-              autoComplete="current-password"
-              required
-            />
+            <div className="relative">
+              <IconLock
+                size={16}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: '#9ca3af' }}
+              />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="••••••••"
+                className="w-full rounded-lg border bg-white pl-9 pr-9 text-sm outline-none transition"
+                style={{
+                  height: '38px',
+                  borderColor: '#e5e7eb',
+                  color: '#111827',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#7f77dd';
+                  e.currentTarget.style.boxShadow = '0 0 0 2px rgba(127,119,221,0.2)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = '#e5e7eb';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                style={{ color: '#9ca3af' }}
+                tabIndex={-1}
+              >
+                {showPassword ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+              </button>
+            </div>
           </div>
 
           {/* Error message */}
