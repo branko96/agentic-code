@@ -94,6 +94,12 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-4">
+            <Link
+              href="/admin/users"
+              className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 font-medium text-primary-foreground transition hover:opacity-90 text-sm"
+            >
+              Admin
+            </Link>
             <div className="text-right">
               <p className="text-sm font-medium text-surface-foreground">
                 {session.user.firstName} {session.user.lastName}

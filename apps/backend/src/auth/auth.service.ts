@@ -31,12 +31,11 @@ export class AuthService {
       throw new ConflictException('Email already in use');
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, 10);
     const user = await this.usersService.create({
       firstName: dto.firstName,
       lastName: dto.lastName,
       email: dto.email,
-      passwordHash,
+      password: dto.password,
     });
 
     return this.buildAuthResponse(user);
