@@ -21,6 +21,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: { sub: string; email: string }) {
     const user = await this.usersService.findByEmail(payload.email);
 
+    if (!user || user.isBanned) {
+      return null;
+    }
+
     return user?.toJSON() ?? null;
   }
 }

@@ -59,4 +59,15 @@ export class UsersService {
   delete(id: string) {
     return this.userModel.findByIdAndDelete(id).exec();
   }
+
+  async toggleBan(id: string): Promise<UserDocument | null> {
+    const user = await this.findById(id);
+    if (!user) return null;
+
+    return this.userModel
+      .findByIdAndUpdate(id, [{ $set: { isBanned: { $not: '$isBanned' } } }], {
+        new: true,
+      })
+      .exec();
+  }
 }

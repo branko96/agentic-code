@@ -8,6 +8,7 @@ export type UserResponse = {
   firstName: string;
   lastName: string;
   email: string;
+  isBanned: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -25,6 +26,9 @@ export class User {
 
   @Prop({ required: true })
   passwordHash: string;
+
+  @Prop({ default: false })
+  isBanned: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
@@ -35,6 +39,7 @@ export function toUserResponse(user: {
   firstName: string;
   lastName: string;
   email: string;
+  isBanned?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }) {
@@ -43,6 +48,7 @@ export function toUserResponse(user: {
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
+    isBanned: user.isBanned ?? false,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   } satisfies UserResponse;

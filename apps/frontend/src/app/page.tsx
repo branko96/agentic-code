@@ -2,9 +2,16 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { IconEdit, IconLogin2, IconTrash, IconUserPlus } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconLock,
+  IconLockOff,
+  IconLogin2,
+  IconTrash,
+  IconUserPlus,
+} from '@tabler/icons-react';
 import { clearToken, getConfig, getMe, login, persistToken, readToken } from '../lib/auth';
-import { getUsers, createUser, updateUser, deleteUser } from '../lib/users';
+import { getUsers, createUser, updateUser, deleteUser, banUser } from '../lib/users';
 import type { AuthUser, NavbarConfig } from '../types/auth';
 import type { User, CreateUserInput, UpdateUserInput } from '../types/user';
 
@@ -153,6 +160,16 @@ export default function Home() {
     }
   }
 
+  async function handleToggleBan(user: User) {
+    try {
+      setUsersError('');
+      await banUser(user.id);
+      setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, isBanned: !u.isBanned } : u)));
+    } catch (err) {
+      setUsersError(err instanceof Error ? err.message : 'Error al cambiar estado');
+    }
+  }
+
   if (isCheckingSession) {
     return (
       <main
@@ -261,6 +278,7 @@ export default function Home() {
                     <th className="px-5 py-3">Nombre</th>
                     <th className="px-5 py-3">Email</th>
                     <th className="px-5 py-3">Creado</th>
+                    <th className="px-5 py-3">Estado</th>
                     <th className="px-5 py-3 text-right">Acciones</th>
                   </tr>
                 </thead>
@@ -276,6 +294,17 @@ export default function Home() {
                       <td className="px-5 py-3" style={{ color: '#6b7280' }}>
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
                       </td>
+                      <td className="px-5 py-3">
+                        <span
+                          className={`inline-block px-2 py-1 text-xs font-medium rounded ${
+                            user.isBanned
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-green-100 text-green-700'
+                          }`}
+                        >
+                          {user.isBanned ? 'Baneado' : 'Activo'}
+                        </span>
+                      </td>
                       <td className="px-5 py-3 text-right">
                         <div className="inline-flex gap-1">
                           <button
@@ -285,6 +314,14 @@ export default function Home() {
                             title="Editar"
                           >
                             <IconEdit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleToggleBan(user)}
+                            className="rounded-lg p-2 transition hover:opacity-80"
+                            style={{ color: user.isBanned ? '#22c55e' : '#f59e0b' }}
+                            title={user.isBanned ? 'Desbanear' : 'Banear'}
+                          >
+                            {user.isBanned ? <IconLockOff size={18} /> : <IconLock size={18} />}
                           </button>
                           <button
                             onClick={() => handleDelete(user)}
