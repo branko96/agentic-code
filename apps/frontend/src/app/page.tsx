@@ -167,20 +167,30 @@ export default function Home() {
   if (session) {
     return (
       <main className="min-h-screen" style={{ backgroundColor: '#f5f5f0' }}>
-        <nav className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-2xl border border-surface-border bg-surface/90 px-5 py-4 shadow-2xl shadow-cyan-950/20 backdrop-blur">
+        <nav
+          className="mx-auto flex w-full max-w-5xl items-center justify-between rounded-2xl border px-5 py-4 shadow-sm"
+          style={{
+            backgroundColor: '#ffffff',
+            borderColor: '#e5e7eb',
+          }}
+        >
           <div>
-            <p className="text-lg font-semibold text-white">{session.config.appName}</p>
-            <p className="text-sm text-muted">
+            <p className="text-lg font-semibold" style={{ color: '#111827' }}>
+              {session.config.appName}
+            </p>
+            <p className="text-sm" style={{ color: '#6b7280' }}>
               {session.config.environment} · {session.config.supportEmail}
             </p>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-sm font-medium text-surface-foreground">
+              <p className="text-sm font-medium" style={{ color: '#111827' }}>
                 {session.user.firstName} {session.user.lastName}
               </p>
-              <p className="text-sm text-muted">{session.user.email}</p>
+              <p className="text-sm" style={{ color: '#6b7280' }}>
+                {session.user.email}
+              </p>
             </div>
 
             <button type="button" onClick={handleLogout} className={primaryButtonClassName}>
