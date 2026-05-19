@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -57,6 +58,10 @@ export class AuthService {
 
     if (!passwordMatches) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (user.isBanned) {
+      throw new ForbiddenException('Your account has been banned');
     }
 
     return user;

@@ -33,3 +33,10 @@ export function deleteUser(id: string): Promise<void> {
     ...getAuthHeaders(),
   });
 }
+
+export function banUser(id: string): Promise<User> {
+  return apiFetch(`/users/${id}/ban`, {
+    method: 'PATCH',
+    ...getAuthHeaders(),
+  });
+}
