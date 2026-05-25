@@ -11,6 +11,7 @@ import Background from '@/components/aria/Background';
 import TopBar from '@/components/aria/TopBar';
 import StatusTicker from '@/components/aria/StatusTicker';
 import Footer from '@/components/aria/Footer';
+import { LeftPanel, RightPanel } from '@/components/aria/SidePanels';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -32,7 +33,8 @@ export default function AuthPage() {
       <Background />
       <TopBar />
       <StatusTicker />
-      <main className="flex min-h-screen items-center justify-center pt-14 pb-10">
+      <main className="flex min-h-screen items-start justify-center pt-14 pb-10 lg:grid lg:grid-cols-[1fr_minmax(420px,460px)_1fr]">
+        <LeftPanel loading={false} />
         <div className="mx-auto w-full max-w-[420px] p-6">
           <BrandMark />
           <div className="rounded-xl border border-surface-border bg-surface p-6 shadow-lg">
@@ -52,6 +54,7 @@ export default function AuthPage() {
             </div>
           </div>
         </div>
+        <RightPanel />
       </main>
       <Footer />
     </>
