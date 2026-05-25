@@ -15,6 +15,14 @@
   --surface-elevated: #1e293b;
   --success: #34d399;
   --warning: #fbbf24;
+  --aria-bg: #09090b;
+  --aria-accent: #22d3ee;
+  --aria-accent-rgb: 34, 211, 238;
+  --aria-accent-soft: rgba(34, 211, 238, 0.12);
+  --aria-success: #34d399;
+  --aria-success-rgb: 52, 211, 153;
+  --aria-danger: #ef4444;
+  --aria-warning: #f59e0b;
 }
 
 body {
@@ -22,8 +30,21 @@ body {
   background:
     radial-gradient(circle at top, rgba(34, 211, 238, 0.16), transparent 38%),
     linear-gradient(180deg, #020617 0%, #111827 100%);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
   min-height: 100vh;
+}
+
+::selection {
+  background: var(--aria-accent);
+  color: var(--aria-bg);
+}
+
+.font-mono,
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-mono);
 }
 
 @layer utilities {
