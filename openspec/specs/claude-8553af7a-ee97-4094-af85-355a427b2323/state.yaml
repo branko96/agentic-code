@@ -7,6 +7,6 @@ phases:
   spec: completed
   design: completed
   tasks: completed
-  apply: pending
-  verify: pending
-  archive: pending
+  apply: completed
+  verify: completed
+  archive: completed
