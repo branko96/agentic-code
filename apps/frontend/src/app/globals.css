@@ -164,6 +164,17 @@ samp {
   }
 }
 
+@keyframes loading-dots {
+  0%,
+  80%,
+  100% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
 .animate-aria-sweep {
   animation: aria-sweep 3s linear infinite;
   background-size: 200% 200%;
