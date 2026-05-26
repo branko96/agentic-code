@@ -98,3 +98,31 @@ export function KeyIcon() {
     </svg>
   );
 }
+
+export function ArrowRightIcon() {
+  return (
+    <svg aria-hidden="true" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={ICON_CLASSES}>
+      <g strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 12h14" />
+        <path d="M12 5l7 7-7 7" />
+      </g>
+    </svg>
+  );
+}
+
+export function FingerprintIcon() {
+  return (
+    <svg aria-hidden="true" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={ICON_CLASSES}>
+      <g strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 12a10 10 0 0 1 20 0" />
+        <path d="M6 12a6 6 0 0 1 12 0" />
+        <path d="M10 12a2 2 0 0 1 4 0" />
+        <path d="M2.5 17.5a15 15 0 0 1 19 0" />
+        <path d="M21.5 17.5a15 15 0 0 0-19 0" />
+        <path d="M4.5 21.5a20 20 0 0 1 15 0" />
+        <path d="M19.5 21.5a20 20 0 0 0-15 0" />
+        <path d="M7 22a25 25 0 0 1 10 0" />
+      </g>
+    </svg>
+  );
+}
