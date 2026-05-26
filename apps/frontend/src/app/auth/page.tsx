@@ -2,11 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { readToken } from '@/lib/auth';
-import BrandMark from '@/components/auth/brand-mark';
-import Tabs from '@/components/auth/tabs';
-import LoginForm from '@/components/auth/login-form';
-import RegisterForm from '@/components/auth/register-form';
+import { login, register, persistToken, readToken } from '@/lib/auth';
+import { AuthCard } from '@/components/aria/AuthCard';
 import Background from '@/components/aria/Background';
 import TopBar from '@/components/aria/TopBar';
 import StatusTicker from '@/components/aria/StatusTicker';
@@ -15,7 +12,8 @@ import { LeftPanel, RightPanel } from '@/components/aria/SidePanels';
 
 export default function AuthPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     const token = readToken();
@@ -24,8 +22,39 @@ export default function AuthPage() {
     }
   }, [router]);
 
-  function handleAuthSuccess() {
-    router.push('/');
+  async function onLogin(data: { email: string; pass: string; remember: boolean }) {
+    setLoading(true);
+    setSuccess(false);
+    try {
+      const response = await login({ email: data.email, password: data.pass });
+      persistToken(response.accessToken);
+      setSuccess(true);
+      setTimeout(() => router.push('/'), 1500);
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onRegister(data: { first: string; last: string; email: string; pass: string }) {
+    setLoading(true);
+    setSuccess(false);
+    try {
+      const response = await register({
+        firstName: data.first,
+        lastName: data.last,
+        email: data.email,
+        password: data.pass,
+      });
+      persistToken(response.accessToken);
+      setSuccess(true);
+      setTimeout(() => router.push('/'), 1500);
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -35,25 +64,7 @@ export default function AuthPage() {
       <StatusTicker />
       <main className="flex min-h-screen items-start justify-center pt-14 pb-10 lg:grid lg:grid-cols-[1fr_minmax(420px,460px)_1fr]">
         <LeftPanel loading={false} />
-        <div className="mx-auto w-full max-w-[420px] p-6">
-          <BrandMark />
-          <div className="rounded-xl border border-surface-border bg-surface p-6 shadow-lg">
-            <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
-            <div className="pt-6">
-              {activeTab === 'login' ? (
-                <LoginForm
-                  onAuthSuccess={handleAuthSuccess}
-                  onSwitchToRegister={() => setActiveTab('register')}
-                />
-              ) : (
-                <RegisterForm
-                  onAuthSuccess={handleAuthSuccess}
-                  onSwitchToLogin={() => setActiveTab('login')}
-                />
-              )}
-            </div>
-          </div>
-        </div>
+        <AuthCard onLogin={onLogin} onRegister={onRegister} loading={loading} success={success} />
         <RightPanel />
       </main>
       <Footer />
