@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { IconEdit, IconTrash, IconUserPlus } from '@tabler/icons-react';
 import { clearToken, getConfig, getMe, readToken } from '../lib/auth';
-import { fetchHealth } from '../lib/api';
+import HealthBadge from '../components/health-badge';
 import { getUsers, createUser, updateUser, deleteUser } from '../lib/users';
 import type { AuthUser, NavbarConfig } from '../types/auth';
 import type { User, CreateUserInput, UpdateUserInput } from '../types/user';
@@ -24,7 +24,6 @@ export default function Home() {
   const [users, setUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [usersError, setUsersError] = useState('');
-  const [healthOk, setHealthOk] = useState<boolean | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -50,12 +49,6 @@ export default function Home() {
       .finally(() => {
         setIsCheckingSession(false);
       });
-  }, []);
-
-  useEffect(() => {
-    fetchHealth()
-      .then(() => setHealthOk(true))
-      .catch(() => setHealthOk(false));
   }, []);
 
   useEffect(() => {
@@ -168,20 +161,7 @@ export default function Home() {
               <p className="text-sm text-muted">{session.user.email}</p>
             </div>
 
-            {healthOk !== null && (
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
-                  healthOk ? 'bg-success/15 text-success' : 'bg-danger/15 text-danger'
-                }`}
-              >
-                <span
-                  className={`inline-block h-2 w-2 rounded-full ${
-                    healthOk ? 'bg-success' : 'bg-danger'
-                  }`}
-                />
-                {healthOk ? 'API online' : 'API offline'}
-              </span>
-            )}
+            <HealthBadge />
 
             <button type="button" onClick={handleLogout} className={primaryButtonClassName}>
               Log out
