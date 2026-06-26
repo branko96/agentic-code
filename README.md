@@ -102,6 +102,16 @@ pnpm dev:frontend
 pnpm dev:backend
 ```
 
+## Local development
+
+```bash
+pnpm install          # Install all dependencies
+pnpm dev              # Start frontend (3000) + backend (3001)
+pnpm test             # Run all unit tests
+```
+
+For E2E tests and other scripts, see [Available Scripts](#available-scripts) below.
+
 ## Available Scripts
 
 ### Root Level
