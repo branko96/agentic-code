@@ -102,6 +102,58 @@ pnpm dev:frontend
 pnpm dev:backend
 ```
 
+## Local Development
+
+### Daily workflow
+
+```bash
+# Start all services (frontend + backend)
+pnpm dev
+
+# Start individually
+pnpm dev:frontend   # Next.js at http://localhost:3000
+pnpm dev:backend     # NestJS at http://localhost:3001
+```
+
+Both servers support hot reload — changes to source files trigger automatic rebuilds.
+
+### MongoDB
+
+The backend defaults to `mongodb://localhost:27017/boilerplate`. You need a running MongoDB instance locally:
+
+```bash
+# With Docker
+docker run -d --name mongodb -p 27017:27017 mongo:7
+
+# Or use mongodb-memory-server (already a devDependency)
+# Set this env variable to skip the external DB requirement:
+MONGODB_URI=mongodb://localhost:27017/boilerplate
+```
+
+Configure the URI in `apps/backend/.env` (copy from `.env.example` if missing):
+
+```
+MONGODB_URI=mongodb://localhost:27017/boilerplate
+PORT=3001
+FRONTEND_URL=http://localhost:3000
+```
+
+### Health check
+
+```bash
+./scripts/check-health.sh
+```
+
+Verifies frontend (port 3000) and backend (port 3001) are responding.
+
+### Cleaning up
+
+```bash
+pnpm clean              # Remove build artifacts + node_modules
+pnpm install            # Fresh install
+pnpm dev                # Start fresh
+```
+
 ## Available Scripts
 
 ### Root Level
