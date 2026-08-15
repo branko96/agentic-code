@@ -29,7 +29,7 @@ describe('AuthService', () => {
           firstName: string;
           lastName: string;
           email: string;
-          passwordHash: string;
+          password: string;
         },
       ]
     >;
@@ -60,12 +60,14 @@ describe('AuthService', () => {
     );
   });
 
-  it('registers a new user with a hashed password', async () => {
+  // Hashing lives in UsersService.create, not here. This test owns the
+  // delegation contract; users.service.spec.ts owns the hashing guarantee.
+  it('registers a new user by delegating credential storage', async () => {
     usersService.findByEmail.mockResolvedValue(null);
     usersService.create.mockImplementation(async (data) => ({
       id: 'user-id',
       email: data.email,
-      passwordHash: data.passwordHash,
+      passwordHash: await bcrypt.hash(data.password, 10),
       toJSON: () => ({
         id: 'user-id',
         firstName: data.firstName,
@@ -86,15 +88,14 @@ describe('AuthService', () => {
         email: 'ada@example.com',
         firstName: 'Ada',
         lastName: 'Lovelace',
-        passwordHash: expect.any(String),
+        password: 'password123',
       }),
     );
 
-    const [{ passwordHash }] = usersService.create.mock.calls[0];
-    expect(passwordHash).not.toBe('password123');
-    await expect(bcrypt.compare('password123', passwordHash)).resolves.toBe(
-      true,
-    );
+    // AuthService must not pre-hash: doing so would double-hash in UsersService
+    // and silently break every subsequent login.
+    const [createArgs] = usersService.create.mock.calls[0];
+    expect(createArgs).not.toHaveProperty('passwordHash');
     expect(result).toEqual({
       accessToken: 'signed-token',
       user: {
