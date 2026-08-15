@@ -47,6 +47,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 
 **Types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -59,6 +60,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `chore`: Other changes
 
 **Examples:**
+
 ```bash
 git commit -m "feat: add user profile page"
 git commit -m "fix(backend): resolve MongoDB connection timeout"
@@ -78,6 +80,7 @@ Then create a pull request on GitHub.
 ### PR Title
 
 Use the same format as commit messages:
+
 ```
 feat: add user authentication
 fix(frontend): resolve button alignment issue
@@ -86,6 +89,7 @@ fix(frontend): resolve button alignment issue
 ### PR Description
 
 Include:
+
 - **What**: What changes were made
 - **Why**: Why these changes were necessary
 - **How**: How the changes were implemented
@@ -149,9 +153,7 @@ export function Button(props: any) {
 // ✅ Good
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
-  ) {}
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   async findAll(): Promise<User[]> {
     return this.userModel.find().exec();
@@ -205,6 +207,7 @@ test('user can login', async ({ page }) => {
 Use specialized agents for development tasks. See [AGENTS.md](./AGENTS.md) for details.
 
 Examples:
+
 ```
 As the frontend developer agent, create a user settings page.
 As the code review agent, review this pull request.
@@ -301,6 +304,7 @@ tests/e2e/tests/
 ## Recognition
 
 Contributors will be recognized in:
+
 - Git commit history
 - Release notes
 - Contributors list

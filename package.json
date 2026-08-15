@@ -10,7 +10,7 @@
     "build": "pnpm --recursive build",
     "build:frontend": "pnpm --filter frontend build",
     "build:backend": "pnpm --filter backend build",
-    "test": "pnpm --recursive test",
+    "test": "pnpm --recursive --filter \"!e2e-tests\" test",
     "test:e2e": "pnpm --filter e2e-tests test",
     "lint": "pnpm --recursive lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
