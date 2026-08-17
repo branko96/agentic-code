@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
+import { ThrottlerModule } from '@nestjs/throttler';
 import type ms from 'ms';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { UsersModule } from '../users/users.module';
@@ -16,6 +17,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     UsersModule,
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
+    // General API default (60 req/min/IP). The auth endpoints below override
+    // this with a stricter limit via @Throttle; everything else inherits it.
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
