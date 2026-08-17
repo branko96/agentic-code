@@ -101,4 +101,51 @@ describe('UsersController authorization (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
   });
+
+  it('allows a user to update their own profile', async () => {
+    const registerResponse = await register('ada@example.com').expect(201);
+    const token = registerResponse.body.accessToken as string;
+    const userId = registerResponse.body.user.id as string;
+
+    await request(app.getHttpServer())
+      .patch(`/users/${userId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ firstName: 'Ada Updated' })
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.firstName).toBe('Ada Updated');
+      });
+  });
+
+  it('forbids a non-admin user from updating another user profile', async () => {
+    const registerResponse = await register('ada@example.com').expect(201);
+    const token = registerResponse.body.accessToken as string;
+
+    const victim = await register('victim@example.com').expect(201);
+    const victimId = victim.body.user.id as string;
+
+    await request(app.getHttpServer())
+      .patch(`/users/${victimId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ firstName: 'Hacked' })
+      .expect(403);
+  });
+
+  it('allows an admin user to update another user profile', async () => {
+    const adminRegister = await register('admin@example.com').expect(201);
+    const adminToken = adminRegister.body.accessToken as string;
+    await promoteToAdmin('admin@example.com');
+
+    const victim = await register('victim@example.com').expect(201);
+    const victimId = victim.body.user.id as string;
+
+    await request(app.getHttpServer())
+      .patch(`/users/${victimId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ firstName: 'Admin Edited' })
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.firstName).toBe('Admin Edited');
+      });
+  });
 });
