@@ -185,6 +185,7 @@ describe('AuthService', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
       email: 'ada@example.com',
+      role: 'user',
       createdAt: undefined,
       updatedAt: undefined,
     });
