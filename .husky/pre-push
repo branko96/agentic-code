@@ -1,0 +1,36 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Pre-push guard: block direct pushes to protected branches, force pushes, and
+# remote branch deletions.
+#
+# Read stdin per the git pre-push hook protocol:
+#   <local ref> <local sha> <remote ref> <remote sha>
+
+set -eu
+
+protected="refs/heads/main refs/heads/master refs/heads/develop"
+zero="0000000000000000000000000000000000000000"
+
+while read -r _lref lsha rref rsha; do
+  for p in $protected; do
+    if [ "$rref" = "$p" ]; then
+      echo "BLOCKED: direct push to $rref. Open a pull request instead." >&2
+      exit 1
+    fi
+  done
+
+  if [ "$lsha" = "$zero" ]; then
+    echo "BLOCKED: remote branch deletion ($rref)." >&2
+    exit 1
+  fi
+
+  # An existing remote tip that is not an ancestor of what we are pushing means
+  # history is being rewritten.
+  if [ "$rsha" != "$zero" ] && ! git merge-base --is-ancestor "$rsha" "$lsha" 2>/dev/null; then
+    echo "BLOCKED: non-fast-forward (force) push to $rref." >&2
+    exit 1
+  fi
+done
+
+exit 0
