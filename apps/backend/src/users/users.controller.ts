@@ -31,11 +31,24 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(
+    @Req() req: Request & { user?: { id?: string; role?: string } },
+    @Param('id') id: string,
+  ) {
+    const authUser = req.user;
+    const isSelf = authUser?.id === id;
+    const isAdmin = authUser?.role === 'admin';
+
+    if (!isSelf && !isAdmin) {
+      throw new ForbiddenException();
+    }
+
     return this.usersService.findById(id);
   }
 
   @Post()
+  @UseGuards(RolesGuard)
+  @roles('admin')
   create(@Body() dto: CreateUserDto) {
     return this.usersService.create(dto);
   }

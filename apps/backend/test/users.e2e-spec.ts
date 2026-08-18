@@ -102,6 +102,66 @@ describe('UsersController authorization (e2e)', () => {
       .expect(200);
   });
 
+  it('forbids a non-admin user from reading another user profile', async () => {
+    const registerResponse = await register('ada@example.com').expect(201);
+    const token = registerResponse.body.accessToken as string;
+
+    const victim = await register('victim@example.com').expect(201);
+    const victimId = victim.body.user.id as string;
+
+    await request(app.getHttpServer())
+      .get(`/users/${victimId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(403);
+  });
+
+  it('allows an admin user to read another user profile', async () => {
+    const adminRegister = await register('admin@example.com').expect(201);
+    const adminToken = adminRegister.body.accessToken as string;
+    await promoteToAdmin('admin@example.com');
+
+    const victim = await register('victim@example.com').expect(201);
+    const victimId = victim.body.user.id as string;
+
+    await request(app.getHttpServer())
+      .get(`/users/${victimId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+  });
+
+  it('forbids a non-admin user from creating a user via POST /users', async () => {
+    const registerResponse = await register('ada@example.com').expect(201);
+    const token = registerResponse.body.accessToken as string;
+
+    await request(app.getHttpServer())
+      .post('/users')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        email: 'grace@example.com',
+        password: 'password123',
+      })
+      .expect(403);
+  });
+
+  it('allows an admin user to create a user via POST /users', async () => {
+    const adminRegister = await register('admin@example.com').expect(201);
+    const adminToken = adminRegister.body.accessToken as string;
+    await promoteToAdmin('admin@example.com');
+
+    await request(app.getHttpServer())
+      .post('/users')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        email: 'grace@example.com',
+        password: 'password123',
+      })
+      .expect(201);
+  });
+
   it('allows a user to update their own profile', async () => {
     const registerResponse = await register('ada@example.com').expect(201);
     const token = registerResponse.body.accessToken as string;
