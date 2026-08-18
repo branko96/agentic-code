@@ -11,6 +11,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { toUserResponse } from './schemas/user.schema';
 import { UsersService } from './users.service';
 
 @UseGuards(JwtAuthGuard)
@@ -19,13 +20,15 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  async findAll() {
+    const users = await this.usersService.findAll();
+    return users.map((user) => toUserResponse(user));
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findById(id);
+  async findOne(@Param('id') id: string) {
+    const user = await this.usersService.findById(id);
+    return user ? toUserResponse(user) : null;
   }
 
   @Post()
