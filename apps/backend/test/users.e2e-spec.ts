@@ -101,7 +101,6 @@ describe('UsersController authorization (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
   });
-
   it('forbids a non-admin user from reading another user profile', async () => {
     const registerResponse = await register('ada@example.com').expect(201);
     const token = registerResponse.body.accessToken as string;
