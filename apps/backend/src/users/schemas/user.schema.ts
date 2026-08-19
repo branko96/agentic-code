@@ -3,11 +3,14 @@ import { HydratedDocument, Types } from 'mongoose';
 
 export type UserDocument = HydratedDocument<User>;
 
+export type UserRole = 'user' | 'admin';
+
 export type UserResponse = {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
+  role: UserRole;
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -25,6 +28,9 @@ export class User {
 
   @Prop({ required: true })
   passwordHash: string;
+
+  @Prop({ type: String, enum: ['user', 'admin'], default: 'user' })
+  role: UserRole;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
@@ -35,6 +41,7 @@ export function toUserResponse(user: {
   firstName: string;
   lastName: string;
   email: string;
+  role?: UserRole;
   createdAt?: Date;
   updatedAt?: Date;
 }) {
@@ -43,6 +50,7 @@ export function toUserResponse(user: {
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
+    role: user.role ?? 'user',
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   } satisfies UserResponse;
