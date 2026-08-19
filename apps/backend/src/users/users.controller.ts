@@ -16,6 +16,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { roles } from '../auth/decorators/roles.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { toUserResponse } from './schemas/user.schema';
 import { UsersService } from './users.service';
 
 @UseGuards(JwtAuthGuard)
@@ -26,13 +27,15 @@ export class UsersController {
   @Get()
   @UseGuards(RolesGuard)
   @roles('admin')
-  findAll() {
-    return this.usersService.findAll();
+  async findAll() {
+    const users = await this.usersService.findAll();
+    return users.map((user) => toUserResponse(user));
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findById(id);
+  async findOne(@Param('id') id: string) {
+    const user = await this.usersService.findById(id);
+    return user ? toUserResponse(user) : null;
   }
 
   @Post()

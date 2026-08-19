@@ -18,7 +18,6 @@ describe('UsersController authorization (e2e)', () => {
       email,
       password: 'password123',
     });
-
   beforeAll(async () => {
     process.env.JWT_SECRET = 'test-secret';
     process.env.JWT_EXPIRES_IN = '1h';
@@ -56,6 +55,46 @@ describe('UsersController authorization (e2e)', () => {
       .collection('users')
       .updateOne({ email }, { $set: { role: 'admin' } });
   };
+
+  it('never exposes passwordHash in GET /users', async () => {
+    const registerResponse = await register('ada@example.com').expect(201);
+    const token = registerResponse.body.accessToken as string;
+    await promoteToAdmin('ada@example.com');
+
+    const response = await request(app.getHttpServer())
+      .get('/users')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0]).toMatchObject({
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      email: 'ada@example.com',
+    });
+    expect(response.body[0]).not.toHaveProperty('passwordHash');
+    expect(JSON.stringify(response.body)).not.toContain('passwordHash');
+  });
+
+  it('never exposes passwordHash in GET /users/:id', async () => {
+    const registerResponse = await register('ada@example.com').expect(201);
+    const token = registerResponse.body.accessToken as string;
+    const userId = registerResponse.body.user.id as string;
+
+    const response = await request(app.getHttpServer())
+      .get(`/users/${userId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      id: userId,
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      email: 'ada@example.com',
+    });
+    expect(response.body).not.toHaveProperty('passwordHash');
+    expect(JSON.stringify(response.body)).not.toContain('passwordHash');
+  });
 
   it('denies a non-admin user list and delete with 403', async () => {
     const registerResponse = await register('ada@example.com').expect(201);
