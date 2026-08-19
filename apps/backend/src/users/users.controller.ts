@@ -33,12 +33,25 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(
+    @Req() req: Request & { user?: { id?: string; role?: string } },
+    @Param('id') id: string,
+  ) {
+    const authUser = req.user;
+    const isSelf = authUser?.id === id;
+    const isAdmin = authUser?.role === 'admin';
+
+    if (!isSelf && !isAdmin) {
+      throw new ForbiddenException();
+    }
+
     const user = await this.usersService.findById(id);
     return user ? toUserResponse(user) : null;
   }
 
   @Post()
+  @UseGuards(RolesGuard)
+  @roles('admin')
   create(@Body() dto: CreateUserDto) {
     return this.usersService.create(dto);
   }
