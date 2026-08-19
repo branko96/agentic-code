@@ -2,12 +2,15 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { roles } from '../auth/decorators/roles.decorator';
@@ -41,7 +44,19 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+  update(
+    @Req() req: Request & { user?: { id?: string; role?: string } },
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+  ) {
+    const authUser = req.user;
+    const isSelf = authUser?.id === id;
+    const isAdmin = authUser?.role === 'admin';
+
+    if (!isSelf && !isAdmin) {
+      throw new ForbiddenException();
+    }
+
     return this.usersService.update(id, dto);
   }
 
