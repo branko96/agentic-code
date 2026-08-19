@@ -6,11 +6,18 @@ import { Connection } from 'mongoose';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 
-describe('UsersController (e2e)', () => {
+describe('UsersController authorization (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
   let mongoServer: MongoMemoryServer;
 
+  const register = (email: string) =>
+    request(app.getHttpServer()).post('/auth/register').send({
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      email,
+      password: 'password123',
+    });
   beforeAll(async () => {
     process.env.JWT_SECRET = 'test-secret';
     process.env.JWT_EXPIRES_IN = '1h';
@@ -43,30 +50,16 @@ describe('UsersController (e2e)', () => {
     await mongoServer.stop();
   });
 
-  async function registerAndLogin() {
-    await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({
-        firstName: 'Ada',
-        lastName: 'Lovelace',
-        email: 'ada@example.com',
-        password: 'password123',
-      })
-      .expect(201);
-
-    const loginResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({
-        email: 'ada@example.com',
-        password: 'password123',
-      })
-      .expect(201);
-
-    return loginResponse.body.accessToken as string;
-  }
+  const promoteToAdmin = async (email: string) => {
+    await connection
+      .collection('users')
+      .updateOne({ email }, { $set: { role: 'admin' } });
+  };
 
   it('never exposes passwordHash in GET /users', async () => {
-    const token = await registerAndLogin();
+    const registerResponse = await register('ada@example.com').expect(201);
+    const token = registerResponse.body.accessToken as string;
+    await promoteToAdmin('ada@example.com');
 
     const response = await request(app.getHttpServer())
       .get('/users')
@@ -84,13 +77,9 @@ describe('UsersController (e2e)', () => {
   });
 
   it('never exposes passwordHash in GET /users/:id', async () => {
-    const token = await registerAndLogin();
-
-    const listResponse = await request(app.getHttpServer())
-      .get('/users')
-      .set('Authorization', `Bearer ${token}`)
-      .expect(200);
-    const userId = listResponse.body[0].id as string;
+    const registerResponse = await register('ada@example.com').expect(201);
+    const token = registerResponse.body.accessToken as string;
+    const userId = registerResponse.body.user.id as string;
 
     const response = await request(app.getHttpServer())
       .get(`/users/${userId}`)
@@ -105,5 +94,50 @@ describe('UsersController (e2e)', () => {
     });
     expect(response.body).not.toHaveProperty('passwordHash');
     expect(JSON.stringify(response.body)).not.toContain('passwordHash');
+  });
+
+  it('denies a non-admin user list and delete with 403', async () => {
+    const registerResponse = await register('ada@example.com').expect(201);
+    const token = registerResponse.body.accessToken as string;
+
+    await request(app.getHttpServer())
+      .get('/users')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(403);
+
+    await request(app.getHttpServer())
+      .delete('/users/some-id')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(403);
+  });
+
+  it('allows an admin user to list and delete', async () => {
+    const adminRegister = await register('admin@example.com').expect(201);
+    const adminToken = adminRegister.body.accessToken as string;
+    await promoteToAdmin('admin@example.com');
+
+    const victim = await register('victim@example.com').expect(201);
+    const victimId = victim.body.user.id as string;
+
+    await request(app.getHttpServer())
+      .get('/users')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .delete(`/users/${victimId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+  });
+
+  it('still allows any authenticated user to read a single user', async () => {
+    const registerResponse = await register('ada@example.com').expect(201);
+    const token = registerResponse.body.accessToken as string;
+    const userId = registerResponse.body.user.id as string;
+
+    await request(app.getHttpServer())
+      .get(`/users/${userId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
   });
 });

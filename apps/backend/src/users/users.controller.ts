@@ -9,6 +9,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { roles } from '../auth/decorators/roles.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { toUserResponse } from './schemas/user.schema';
@@ -20,6 +22,8 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
+  @UseGuards(RolesGuard)
+  @roles('admin')
   async findAll() {
     const users = await this.usersService.findAll();
     return users.map((user) => toUserResponse(user));
@@ -42,6 +46,8 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @UseGuards(RolesGuard)
+  @roles('admin')
   remove(@Param('id') id: string) {
     return this.usersService.delete(id);
   }
