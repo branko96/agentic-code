@@ -17,11 +17,14 @@
 #   quedan colgando.
 # - `CMD node apps/backend/dist/main.js` asume que `nest build` emite un
 #   `dist/` PLANO (main.js en la raíz de dist, no en dist/src/). Eso requiere
-#   que apps/backend/tsconfig.json tenga `rootDir: "./src"` e
-#   `include: ["src/**/*"]` explícitos -- sin eso, tsc infiere el rootDir
-#   como el ancestro común de src/ y test/ (si test/ también entra a
-#   compilación) y anida todo bajo dist/src/, rompiendo este CMD en
-#   silencio (el build no falla, solo produce el binario en otro path).
+#   un `tsconfig.build.json` con `rootDir: "./src"` y `exclude` de test/specs
+#   -- sin eso, tsc infiere el rootDir como el ancestro común de src/ y
+#   test/ (si test/ también entra a compilación) y anida todo bajo dist/src/,
+#   rompiendo este CMD en silencio (el build no falla, solo produce el
+#   binario en otro path). Importante: este fix va en tsconfig.build.json,
+#   NUNCA en tsconfig.json -- ESLint usa tsconfig.json vía parserOptions.project
+#   para lint type-aware, y si ese archivo excluye los *.spec.ts, ESLint
+#   rompe con "TSConfig does not include this file" en cada spec.
 
 # ── Stage 1: dependencias ─────────────────────────────────────────────────────
 FROM node:20-alpine AS deps
