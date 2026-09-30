@@ -154,12 +154,3 @@ jobs:
 
       - name: Build all packages
         run: pnpm build
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: |
-            apps/frontend/.next
-            apps/backend/dist
-          retention-days: 7
