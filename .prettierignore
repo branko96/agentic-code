@@ -10,3 +10,4 @@ yarn.lock
 .turbo
 playwright-report
 test-results
+screenshots

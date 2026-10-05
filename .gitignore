@@ -58,3 +58,6 @@ Thumbs.db
 
 # TypeScript incremental build info
 **/*.tsbuildinfo
+
+# E2E run evidence (screenshots/<E2E_RUN_ID>/)
+screenshots/
