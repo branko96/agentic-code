@@ -266,7 +266,7 @@ nest generate service your-module
 ### Adding a New E2E Test
 
 ```
-tests/e2e/tests/
+apps/e2e/tests/
 └── your-feature.spec.ts
 ```
 

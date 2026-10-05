@@ -42,7 +42,7 @@ fi
 
 # Install Playwright browsers
 echo "🎭 Installing Playwright browsers..."
-cd tests/e2e
+cd apps/e2e
 pnpm exec playwright install
 cd ../..
 

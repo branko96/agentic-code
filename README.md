@@ -148,17 +148,24 @@ pnpm test --coverage
 ### E2E Tests
 
 ```bash
-# Run E2E tests
+# Seed the demo user (idempotent; refuses DBs whose name lacks dev/e2e/test)
+MONGODB_URI=mongodb://localhost:27017/e2e-test pnpm seed
+
+# Run E2E tests (`pnpm e2e` is an alias of `pnpm test:e2e`)
 pnpm test:e2e
 
+# Runner mode: with E2E_RUN_ID set, the stack is expected to be up already,
+# chromium only, and screenshots of every test go to screenshots/<E2E_RUN_ID>/
+E2E_RUN_ID=local pnpm e2e
+
 # Run E2E tests in UI mode
-cd tests/e2e && pnpm test:ui
+cd apps/e2e && pnpm test:ui
 
 # Run E2E tests in headed mode
-cd tests/e2e && pnpm test:headed
+cd apps/e2e && pnpm test:headed
 
 # Debug E2E tests
-cd tests/e2e && pnpm test:debug
+cd apps/e2e && pnpm test:debug
 ```
 
 ## AI Agents
@@ -378,7 +385,7 @@ lsof -ti:3001 | xargs kill -9
 
 ```bash
 # Reinstall browsers
-cd tests/e2e
+cd apps/e2e
 pnpm exec playwright install --with-deps
 ```
 

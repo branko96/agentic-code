@@ -154,6 +154,19 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
+  apps/e2e:
+    dependencies:
+      '@playwright/test':
+        specifier: ^1.41.0
+        version: 1.57.0
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.5
+        version: 20.19.28
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
   apps/frontend:
     dependencies:
       '@tabler/icons-react':
@@ -199,19 +212,6 @@ importers:
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@20.19.28)(vite@8.2.1(@types/node@20.19.28)(jiti@1.21.7)(terser@5.44.1)(yaml@2.8.2))
-
-  tests/e2e:
-    dependencies:
-      '@playwright/test':
-        specifier: ^1.41.0
-        version: 1.57.0
-    devDependencies:
-      '@types/node':
-        specifier: ^20.11.5
-        version: 20.19.28
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
 
 packages:
 
